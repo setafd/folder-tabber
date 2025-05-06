@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Dashboard",
+  "version": "1.0",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["bookmarks", "favicon", "tabs", "tabGroups", "storage"],
+  "web_accessible_resources": [
+    {
+      "resources": ["_favicon/*"],
+      "matches": ["<all_urls>"],
+      "extension_ids": ["*"]
+    }
+  ]
+}

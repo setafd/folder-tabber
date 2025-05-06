@@ -1,0 +1,7 @@
+.bookmarkItem {
+  cursor: pointer;
+}
+
+.bookmarkItem:hover {
+  color: var(--mantine-color-anchor);
+}
