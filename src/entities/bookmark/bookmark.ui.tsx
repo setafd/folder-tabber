@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Divider, Group, Image, Stack, StackProps, Text, Title } from '@mantine/core';
 
-import { FolderIcon } from '@shared/icons/FolderIcon';
+import { FolderIcon } from '@shared/icons';
 import { getFaviconUrl } from '@shared/lib/getFaviconUrl';
 
 import { FolderChildren } from './bookmark.model';

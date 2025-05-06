@@ -2,7 +2,7 @@ interface FolderIconProps extends React.ComponentPropsWithoutRef<'svg'> {
   size?: number | string;
 }
 
-export const FolderIcon: React.FC<FolderIconProps> = ({ size, style, ...others }) => {
+const FolderIcon: React.FC<FolderIconProps> = ({ size, style, ...others }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -19,3 +19,5 @@ export const FolderIcon: React.FC<FolderIconProps> = ({ size, style, ...others }
     </svg>
   );
 };
+
+export default FolderIcon;
