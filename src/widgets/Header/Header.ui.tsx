@@ -1,9 +1,10 @@
 import { memo } from 'react';
 
-import { ActionIcon, Group, Input, ScrollArea, Tabs } from '@mantine/core';
+import { ActionIcon, Group, ScrollArea, Tabs, TextInput } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 
 import { useCreateFolder } from '@features/createFolder';
+import { useRenameFolder } from '@features/editFolder';
 
 import { useBookmarkStore } from '@entities/bookmark';
 
@@ -16,7 +17,8 @@ import styles from './Header.module.scss';
 
 const Header: React.FC = () => {
   const { folders, selectedFolderId, setSelectedFolderId } = useBookmarkStore();
-  const { showInput, isInput, inputProps } = useCreateFolder();
+  const { showInput: showCreateInput, isInput: isCreateInput, inputProps: createInputProps } = useCreateFolder();
+  const { showInput: showEditInput, editableId, inputProps: editInputProps } = useRenameFolder();
 
   const onChangeFolder = (value: string | null) => {
     if (value) {
@@ -34,14 +36,27 @@ const Header: React.FC = () => {
         <Tabs variant="pills" value={selectedFolderId} onChange={onChangeFolder}>
           <Tabs.List>
             {folders.map((folder) => (
-              <Tabs.Tab key={folder.id} value={folder.id}>
-                {folder.title}
+              <Tabs.Tab
+                classNames={{ tab: folder.id === editableId ? styles.editTab : '', tabLabel: styles.tabLabel }}
+                key={folder.id}
+                value={folder.id}
+                onDoubleClick={(event) => {
+                  event.preventDefault();
+                  showEditInput(folder.id);
+                }}
+                maw={120}
+              >
+                {folder.id === editableId ? (
+                  <TextInput defaultValue={folder.title} p={0} size="xs" {...editInputProps} />
+                ) : (
+                  folder.title
+                )}
               </Tabs.Tab>
             ))}
-            {isInput && <Input p={0} size="xs" {...inputProps} />}
+            {isCreateInput && <TextInput size="xs" {...createInputProps} />}
           </Tabs.List>
         </Tabs>
-        <ActionIcon size="input-sm" onClick={showInput}>
+        <ActionIcon size="input-sm" onClick={showCreateInput}>
           <AddFolderIcon />
         </ActionIcon>
       </Group>

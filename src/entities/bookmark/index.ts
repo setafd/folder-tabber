@@ -1,3 +1,3 @@
 export { useBookmarkStore } from './bookmark.model';
 export { BookmarkFolder } from './bookmark.ui';
-export { createBookmarkFolder } from './bookmark.service';
+export { createBookmarkFolder, editBookmarkFolder } from './bookmark.service';
