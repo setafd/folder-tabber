@@ -24,7 +24,7 @@ type BookmarkFolderProps = {
 const BookmarkItem: React.FC<BookmarkItemProps> = ({ title, onClick, url }) => {
   return (
     <Group gap="xs" wrap="nowrap">
-      <Image src={getFaviconUrl(url ?? '')} alt="" width={16} height={16} />
+      <Image src={getFaviconUrl(url ?? '')} alt="" w={16} h={16}/>
       <Text size="sm" className={styles.bookmarkItem} truncate role="link" onClick={onClick}>
         {title}
       </Text>
