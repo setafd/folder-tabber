@@ -11,19 +11,23 @@ const GridContent: React.FC = () => {
 
   const gridRef = useRef<HTMLDivElement>(null);
 
+  const isEmpty = bookmarks.length === 0;
+
   useEffect(() => {
+    if (isEmpty) {
+      return;
+    }
     new Packery(gridRef.current, {
       itemSelector: '.element-item',
       gutter: 8,
       columnWidth: 250,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarks]);
 
   const onCreateBookmark = () => {
     // TBD
   };
-
-  const isEmpty = bookmarks.length === 0;
 
   if (isEmpty) {
     return <EmptyContent onCreateBookmark={onCreateBookmark} />;
@@ -59,7 +63,9 @@ const EmptyContent: React.FC<EmptyContentProps> = ({ onCreateBookmark }) => {
       h="calc(100vh - var(--app-shell-header-height, 0px) - var(--app-shell-padding) * 2)"
     >
       <Text>No bookmarks found in this folder</Text>
-      <Button onClick={onCreateBookmark} variant="subtle">Add bookmark</Button>
+      <Button onClick={onCreateBookmark} variant="subtle">
+        Add bookmark
+      </Button>
     </Stack>
   );
 };

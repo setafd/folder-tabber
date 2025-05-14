@@ -82,7 +82,7 @@ export const mockBookmark: MockBookmark = {
     }
   },
   create: async (bookmark, callback) => {
-    await delay();
+    await delay(200);
     const newNode = {
       ...bookmark,
       id: `${Date.now()}`,

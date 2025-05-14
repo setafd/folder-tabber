@@ -1,14 +1,22 @@
 import { memo } from 'react';
 
-import { Group, ScrollArea, Tabs } from '@mantine/core';
+import { ActionIcon, Group, Input, ScrollArea, Tabs } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 
+import { useCreateFolder } from '@features/createFolder';
+
 import { useBookmarkStore } from '@entities/bookmark';
+
+import { AddFolderIcon } from '@shared/icons';
+
+import { NUMBER_HOTKEYS } from './Header.const';
+import { getIndexByKeyboardNumber } from './Header.lib';
 
 import styles from './Header.module.scss';
 
 const Header: React.FC = () => {
   const { folders, selectedFolderId, setSelectedFolderId } = useBookmarkStore();
+  const { showInput, isInput, inputProps } = useCreateFolder();
 
   const onChangeFolder = (value: string | null) => {
     if (value) {
@@ -16,17 +24,9 @@ const Header: React.FC = () => {
     }
   };
 
-  useHotkeys([
-    ['1', () => folders?.[0] && onChangeFolder(folders[0].id)],
-    ['2', () => folders?.[1] && onChangeFolder(folders[1].id)],
-    ['3', () => folders?.[2] && onChangeFolder(folders[2].id)],
-    ['4', () => folders?.[3] && onChangeFolder(folders[3].id)],
-    ['5', () => folders?.[4] && onChangeFolder(folders[4].id)],
-    ['6', () => folders?.[5] && onChangeFolder(folders[5].id)],
-    ['7', () => folders?.[6] && onChangeFolder(folders[6].id)],
-    ['8', () => folders?.[7] && onChangeFolder(folders[7].id)],
-    ['9', () => folders?.[8] && onChangeFolder(folders[8].id)],
-  ]);
+  useHotkeys(
+    NUMBER_HOTKEYS.map((key) => [key, () => onChangeFolder(folders?.[getIndexByKeyboardNumber(key)]?.id || null)]),
+  );
 
   return (
     <ScrollArea classNames={{ viewport: styles.viewport }} display="flex" h="100%" scrollbars="x">
@@ -38,8 +38,12 @@ const Header: React.FC = () => {
                 {folder.title}
               </Tabs.Tab>
             ))}
+            {isInput && <Input p={0} size="xs" {...inputProps} />}
           </Tabs.List>
         </Tabs>
+        <ActionIcon size="input-sm" onClick={showInput}>
+          <AddFolderIcon />
+        </ActionIcon>
       </Group>
     </ScrollArea>
   );
