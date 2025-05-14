@@ -1,3 +1,13 @@
 .viewport > div {
   height: 100%;
 }
+
+.tabLabel {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.editTab {
+  background: none;
+  padding: 0;
+}

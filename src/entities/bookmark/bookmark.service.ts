@@ -1,4 +1,4 @@
-import { createBookmark } from './bookmark.api';
+import { createBookmark, editBookmark } from './bookmark.api';
 import { bookmarkStore } from './bookmark.model';
 
 export const createBookmarkFolder = async (title: string) => {
@@ -19,4 +19,10 @@ export const createBookmarkFolder = async (title: string) => {
   });
 
   return newFolder;
+};
+
+export const editBookmarkFolder = async (id: string, changes: chrome.bookmarks.UpdateChanges) => {
+  return editBookmark(id, changes).then(() => {
+    bookmarkStore.getState().fetchFolders();
+  });
 };

@@ -212,7 +212,7 @@ const mockData: BTreeNode[] = [
             index: 0,
             parentId: '1',
             syncing: false,
-            title: 'Old but gold',
+            title: 'Old but gold sdsadsasadsa asdasdas ddsd asd',
           },
           {
             children: [
