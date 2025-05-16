@@ -35,6 +35,7 @@ type MockBookmark = {
     callback: (result: BTreeNode) => void,
   ) => Promise<BTreeNode | void>;
   remove: (id: string, callback: () => void) => Promise<void>;
+  removeTree: (id: string, callback: () => void) => Promise<void>;
 };
 
 export const mockBookmark: MockBookmark = {
@@ -103,6 +104,25 @@ export const mockBookmark: MockBookmark = {
     }
   },
   remove: async (id, callback) => {
+    await delay();
+    const nodeToDelete = deepFindTreeNode(mockData, (node) => node.id === id);
+    if (!nodeToDelete) {
+      throw new Error(`Node with id ${id} not found`);
+    }
+    const parentNode = deepFindTreeNode(mockData, (node) => node.id === nodeToDelete.parentId);
+    if (!parentNode || !Array.isArray(parentNode.children)) {
+      throw new Error(`Parent node with id ${nodeToDelete.parentId} not found`);
+    }
+    const index = parentNode.children.findIndex((node) => node.id === id);
+    if (index === -1) {
+      throw new Error(`Node with id ${id} not found in parent node`);
+    }
+    parentNode.children.splice(index, 1);
+    if (callback) {
+      callback();
+    }
+  },
+  removeTree: async (id, callback) => {
     await delay();
     const nodeToDelete = deepFindTreeNode(mockData, (node) => node.id === id);
     if (!nodeToDelete) {

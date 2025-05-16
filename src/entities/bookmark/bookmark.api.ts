@@ -27,3 +27,7 @@ export const editBookmark = (id: string, changes: chrome.bookmarks.UpdateChanges
 
 export const createBookmark = (bookmark: chrome.bookmarks.CreateDetails) =>
   chrome.bookmarks.create(bookmark);
+
+export const deleteBookmark = (id: string) => chrome.bookmarks.remove(id);
+
+export const deleteBookmarkTree = (id: string) => chrome.bookmarks.removeTree(id);
