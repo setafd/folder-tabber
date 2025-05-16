@@ -30,11 +30,11 @@ export const useCreateFolder = () => {
 
   return {
     showInput: () => setIsInput(true),
+    hideInput: () => setIsInput(false),
     isInput,
     inputProps: {
       onKeyDown,
       autoFocus: true,
-      onBlur: () => setIsInput(false),
     },
   };
 };

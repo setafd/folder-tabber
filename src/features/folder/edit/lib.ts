@@ -30,11 +30,11 @@ export const useRenameFolder = () => {
 
   return {
     showInput: (id: string) => setCurrentId(id),
+    hideInput: () => setCurrentId(null),
     editableId: currentId,
     inputProps: {
       onKeyDown,
       autoFocus: true,
-      onBlur: () => setCurrentId(null),
     },
   };
 };
