@@ -24,7 +24,7 @@ type BookmarkFolderProps = {
 const BookmarkItem: React.FC<BookmarkItemProps> = ({ title, onClick, url }) => {
   return (
     <Group gap="xs" wrap="nowrap">
-      <Image src={getFaviconUrl(url ?? '')} alt="" w={16} h={16}/>
+      <Image src={getFaviconUrl(url ?? '')} alt="" w={16} h={16} />
       <Text size="sm" className={styles.bookmarkItem} truncate role="link" onClick={onClick}>
         {title}
       </Text>
@@ -44,7 +44,13 @@ export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className
 
       <Stack gap={2} pos="relative" pl="xs">
         <Divider pos="absolute" left={0} orientation="vertical" h="100%" />
-        {bookmarkTree?.map((bookmark) => <BookmarkItem key={bookmark.id} url={bookmark.url} title={bookmark.title} />)}
+        {bookmarkTree?.map((bookmark) => {
+          if (bookmark.children) {
+            return <BookmarkFolder key={bookmark.id} title={bookmark.title} bookmarkTree={bookmark.children} />;
+          }
+
+          return <BookmarkItem key={bookmark.id} url={bookmark.url} title={bookmark.title} />;
+        })}
       </Stack>
     </Stack>
   );
