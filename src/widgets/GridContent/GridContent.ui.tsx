@@ -4,10 +4,10 @@ import { Box, Button, Stack, Text } from '@mantine/core';
 
 import Packery from 'packery';
 
-import { BookmarkFolder, useBookmarkStore } from '@entities/bookmark';
+import { BookmarkFolder, type BookmarkFolderProps, openTab, useBookmarkStore } from '@entities/bookmark';
 
 const GridContent: React.FC = () => {
-  const { folderChildrens: bookmarks } = useBookmarkStore();
+  const { folderChildrens: bookmarks, selectedFolder } = useBookmarkStore();
 
   const gridRef = useRef<HTMLDivElement>(null);
 

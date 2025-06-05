@@ -17,7 +17,7 @@ import { getIndexByKeyboardNumber } from './Header.lib';
 import styles from './Header.module.scss';
 
 const Header: React.FC = () => {
-  const { folders, selectedFolderId, setSelectedFolderId } = useBookmarkStore();
+  const { folders, selectedFolder, setSelectedFolderId } = useBookmarkStore();
   const {
     showInput: showCreateInput,
     isInput: isCreateInput,
@@ -45,7 +45,7 @@ const Header: React.FC = () => {
   return (
     <ScrollArea classNames={{ viewport: styles.viewport }} display="flex" h="100%" scrollbars="x">
       <Group h="100%" align="center" justify="space-between" wrap="nowrap" px="sm">
-        <Tabs variant="pills" value={selectedFolderId} onChange={onChangeFolder}>
+        <Tabs variant="pills" value={selectedFolder?.id} onChange={onChangeFolder}>
           <Tabs.List>
             {folders.map((folder) => (
               <Tabs.Tab
