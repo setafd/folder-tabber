@@ -1,5 +1,7 @@
 import { createStore, useStore } from 'zustand';
-import { type DevtoolsOptions, type PersistOptions, devtools, persist } from 'zustand/middleware';
+import { type DevtoolsOptions, type PersistOptions, createJSONStorage, devtools, persist } from 'zustand/middleware';
+
+import { IS_DEV } from '@shared/config';
 
 import { getBookmarksTree, getSubTree } from './bookmark.api';
 
@@ -14,30 +16,48 @@ export type FolderChildren = chrome.bookmarks.BookmarkTreeNode;
 interface BookmarkState {
   folders: TopLevelFolder[];
   fetchFolders: () => void;
-  selectedFolderId: string | null;
+  selectedFolder: {
+    id: string;
+    title: string;
+  } | null;
   setSelectedFolderId: (id: string) => void;
   folderChildrens: FolderChildren[];
   newFolderDestinationIds: string[];
 }
 
-type PersistedBookmarkState = Pick<BookmarkState, 'folders' | 'selectedFolderId' | 'folderChildrens'>;
+type PersistedBookmarkState = Pick<BookmarkState, 'folders' | 'selectedFolder' | 'folderChildrens'>;
 
 const devtoolsOptions: DevtoolsOptions = {
-  name: 'BookmarkStore',
+  name: 'bookmark-storage',
+  enabled: IS_DEV,
 };
 
 const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
   name: 'bookmark-storage',
   version: 1,
+  storage: IS_DEV
+    ? createJSONStorage(() => localStorage)
+    : createJSONStorage(() => ({
+        getItem: async (name: string): Promise<string | null> => {
+          const result = await chrome.storage.local.get([name]);
+          return result[name] || null;
+        },
+        setItem: async (name: string, value: string): Promise<void> => {
+          await chrome.storage.local.set({ [name]: value });
+        },
+        removeItem: async (name: string): Promise<void> => {
+          await chrome.storage.local.remove([name]);
+        },
+      })),
   partialize: (state) => ({
     folders: state.folders,
-    selectedFolderId: state.selectedFolderId,
+    selectedFolder: state.selectedFolder,
     folderChildrens: state.folderChildrens,
   }),
   onRehydrateStorage: (state) => {
     return () => {
-      if (state.selectedFolderId) {
-        state.setSelectedFolderId(state.selectedFolderId);
+      if (state.selectedFolder) {
+        state.setSelectedFolderId(state.selectedFolder?.id);
       }
     };
   },
@@ -59,23 +79,30 @@ export const bookmarkStore = createStore<BookmarkState>()(
               title: item.title,
             }));
 
-          set({ newFolderDestinationIds: bookmarksTree.map((item) => item.id) });
+          set({ newFolderDestinationIds: bookmarksTree.map((item) => item.id) }, false, 'setNewFilderDestinationIds');
 
           // set first folder as selected if there is no selected folder
-          if (!get().selectedFolderId && folders.length) {
+          if (!get().selectedFolder && folders.length) {
             get().setSelectedFolderId(folders[0].id);
           }
 
           set({ folders }, false, 'fetchFolders');
         },
-        selectedFolderId: null,
+        selectedFolder: null,
         setSelectedFolderId: async (id) => {
-          set({ selectedFolderId: id }, false, 'setSelectedFolderId');
+          const foundFolder = get().folders.find((folder) => folder.id === id);
+          console.log(get().folders);
+          if (!foundFolder) {
+            console.error(`Can't find folder with id=${id}`);
+            return;
+          }
+
+          set({ selectedFolder: { id, title: foundFolder.title } }, false, 'setSelectedFolder');
           const [folder] = await getSubTree(id);
           const children = folder.children || [];
 
           if (!children.length) {
-            set({ folderChildrens: [] });
+            set({ folderChildrens: [] }, false, 'setFolderChildrens');
             return;
           }
 

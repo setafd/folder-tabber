@@ -4,10 +4,10 @@ import { Box, Button, Stack, Text } from '@mantine/core';
 
 import Packery from 'packery';
 
-import { BookmarkFolder, useBookmarkStore } from '@entities/bookmark';
+import { BookmarkFolder, type BookmarkFolderProps, openTab, useBookmarkStore } from '@entities/bookmark';
 
 const GridContent: React.FC = () => {
-  const { folderChildrens: bookmarks } = useBookmarkStore();
+  const { folderChildrens: bookmarks, selectedFolder } = useBookmarkStore();
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +24,15 @@ const GridContent: React.FC = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarks]);
+
+  const onClickBookmark: BookmarkFolderProps['onClickBookmark'] = (event) => {
+    event.preventDefault();
+    const inCurrent = !event.ctrlKey;
+    const groupName = selectedFolder?.title;
+    const url = event.currentTarget.dataset.url!;
+
+    openTab(url, groupName!, inCurrent);
+  };
 
   const onCreateBookmark = () => {
     // TBD
@@ -42,6 +51,7 @@ const GridContent: React.FC = () => {
             className="element-item"
             title={bookmark.title}
             bookmarkTree={bookmark.children}
+            onClickBookmark={onClickBookmark}
           />
         );
       })}
