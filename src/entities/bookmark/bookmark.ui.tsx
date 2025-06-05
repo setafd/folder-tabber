@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Divider, Group, Image, Stack, StackProps, Text, Title } from '@mantine/core';
+import { Anchor, Divider, Group, Image, Stack, StackProps, Text, Title } from '@mantine/core';
 
 import { FolderIcon } from '@shared/icons';
 import { getFaviconUrl } from '@shared/lib/getFaviconUrl';
@@ -11,28 +11,31 @@ import styles from './bookmark.module.scss';
 
 type BookmarkItemProps = {
   title: string;
-  onClick?: React.MouseEventHandler<HTMLParagraphElement>;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   url?: string;
 };
 
-type BookmarkFolderProps = {
+export type BookmarkFolderProps = {
   title: string;
   bookmarkTree: FolderChildren['children'];
   className?: StackProps['className'];
+  onClickBookmark?: BookmarkItemProps['onClick'];
 };
 
 const BookmarkItem: React.FC<BookmarkItemProps> = ({ title, onClick, url }) => {
   return (
-    <Group gap="xs" wrap="nowrap">
-      <Image src={getFaviconUrl(url ?? '')} alt="" w={16} h={16} />
-      <Text size="sm" className={styles.bookmarkItem} truncate role="link" onClick={onClick}>
-        {title}
-      </Text>
-    </Group>
+    <Anchor component="button" onClick={onClick} data-url={url} className={styles.bookmarkItem}>
+      <Group gap="xs" wrap="nowrap">
+        <Image src={getFaviconUrl(url ?? '')} alt="" w={16} h={16} />
+        <Text size="sm" truncate role="link">
+          {title}
+        </Text>
+      </Group>
+    </Anchor>
   );
 };
 
-export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className, bookmarkTree }) => {
+export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className, bookmarkTree, onClickBookmark }) => {
   return (
     <Stack gap="xs" className={className} maw={250}>
       <Group wrap="nowrap" gap="xs">
@@ -49,7 +52,7 @@ export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className
             return <BookmarkFolder key={bookmark.id} title={bookmark.title} bookmarkTree={bookmark.children} />;
           }
 
-          return <BookmarkItem key={bookmark.id} url={bookmark.url} title={bookmark.title} />;
+          return <BookmarkItem key={bookmark.id} url={bookmark.url} title={bookmark.title} onClick={onClickBookmark} />;
         })}
       </Stack>
     </Stack>

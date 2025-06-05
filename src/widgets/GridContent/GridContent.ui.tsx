@@ -25,6 +25,15 @@ const GridContent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarks]);
 
+  const onClickBookmark: BookmarkFolderProps['onClickBookmark'] = (event) => {
+    event.preventDefault();
+    const inCurrent = !event.ctrlKey;
+    const groupName = selectedFolder?.title;
+    const url = event.currentTarget.dataset.url!;
+
+    openTab(url, groupName!, inCurrent);
+  };
+
   const onCreateBookmark = () => {
     // TBD
   };
@@ -42,6 +51,7 @@ const GridContent: React.FC = () => {
             className="element-item"
             title={bookmark.title}
             bookmarkTree={bookmark.children}
+            onClickBookmark={onClickBookmark}
           />
         );
       })}

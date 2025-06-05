@@ -1,5 +1,6 @@
 .bookmarkItem {
-  cursor: pointer;
+  color: var(--mantine-color-text);
+  transition: color 0.2s ease-in-out;
 }
 
 .bookmarkItem:hover {
