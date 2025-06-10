@@ -10,7 +10,7 @@ import { Header } from '@widgets/Header';
 import { useBookmarkStore } from '@entities/bookmark';
 
 export const App: React.FC = () => {
-  const preferredColorScheme = useColorScheme();
+  const preferredColorScheme = useColorScheme('light', { getInitialValueInEffect: true });
 
   const { fetchFolders } = useBookmarkStore();
 

@@ -17,7 +17,7 @@ import { getIndexByKeyboardNumber } from './Header.lib';
 import styles from './Header.module.scss';
 
 const Header: React.FC = () => {
-  const { folders, selectedFolder, setSelectedFolderId } = useBookmarkStore();
+  const { folders, selectedFolder, setSelectedFolder } = useBookmarkStore();
   const {
     showInput: showCreateInput,
     isInput: isCreateInput,
@@ -32,9 +32,9 @@ const Header: React.FC = () => {
   } = useRenameFolder();
   const { onDeleteFolder } = useDeleteFolder();
 
-  const onChangeFolder = (value: string | null) => {
-    if (value) {
-      setSelectedFolderId(value);
+  const onChangeFolder = (folderId: string | null) => {
+    if (folderId) {
+      setSelectedFolder(folderId);
     }
   };
 

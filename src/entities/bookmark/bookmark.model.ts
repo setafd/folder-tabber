@@ -20,9 +20,9 @@ interface BookmarkState {
     id: string;
     title: string;
   } | null;
-  setSelectedFolderId: (id: string) => void;
+  setSelectedFolder: (id: string) => void;
   folderChildrens: FolderChildren[];
-  newFolderDestinationIds: string[];
+  rootParentsIds: string[];
 }
 
 type PersistedBookmarkState = Pick<BookmarkState, 'folders' | 'selectedFolder' | 'folderChildrens'>;
@@ -57,7 +57,7 @@ const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
   onRehydrateStorage: (state) => {
     return () => {
       if (state.selectedFolder) {
-        state.setSelectedFolderId(state.selectedFolder?.id);
+        state.setSelectedFolder(state.selectedFolder?.id);
       }
     };
   },
@@ -79,17 +79,17 @@ export const bookmarkStore = createStore<BookmarkState>()(
               title: item.title,
             }));
 
-          set({ newFolderDestinationIds: bookmarksTree.map((item) => item.id) }, false, 'setNewFilderDestinationIds');
+          set({ rootParentsIds: bookmarksTree.map((item) => item.id) }, false, 'setNewRootParentsIds');
 
           // set first folder as selected if there is no selected folder
           if (!get().selectedFolder && folders.length) {
-            get().setSelectedFolderId(folders[0].id);
+            get().setSelectedFolder(folders[0].id);
           }
 
           set({ folders }, false, 'fetchFolders');
         },
         selectedFolder: null,
-        setSelectedFolderId: async (id) => {
+        setSelectedFolder: async (id) => {
           const foundFolder = get().folders.find((folder) => folder.id === id);
           console.log(get().folders);
           if (!foundFolder) {
@@ -124,7 +124,7 @@ export const bookmarkStore = createStore<BookmarkState>()(
           set({ folderChildrens: mappedSubTree }, false, 'setFolderChildrens');
         },
         folderChildrens: [],
-        newFolderDestinationIds: [],
+        rootParentsIds: [],
       }),
       persistOptions,
     ),

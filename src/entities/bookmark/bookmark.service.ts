@@ -2,7 +2,7 @@ import { createBookmark, deleteBookmark, deleteBookmarkTree, editBookmark } from
 import { bookmarkStore } from './bookmark.model';
 
 export const createBookmarkFolder = async (title: string) => {
-  const possibleParentsIds = bookmarkStore.getState().newFolderDestinationIds;
+  const possibleParentsIds = bookmarkStore.getState().rootParentsIds;
   if (possibleParentsIds.length === 0) {
     return;
   }
