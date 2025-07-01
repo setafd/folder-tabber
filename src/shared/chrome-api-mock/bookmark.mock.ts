@@ -174,15 +174,6 @@ const mockData: BTreeNode[] = [
                   {
                     children: [
                       {
-                        dateAdded: 1704961134000,
-                        id: '79',
-                        index: 14,
-                        parentId: '64',
-                        syncing: false,
-                        title: 'Le jeu de Marin (en-fr) by DDomeIsWatching',
-                        url: 'https://ddomeiswatching.itch.io/le-jeu-de-marin',
-                      },
-                      {
                         dateAdded: 1731786769000,
                         id: '196',
                         index: 17,

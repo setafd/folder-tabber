@@ -42,25 +42,15 @@ const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
           const result = await chrome.storage.local.get([name]);
           return result[name] || null;
         },
-        setItem: async (name: string, value: string): Promise<void> => {
-          await chrome.storage.local.set({ [name]: value });
-        },
-        removeItem: async (name: string): Promise<void> => {
-          await chrome.storage.local.remove([name]);
-        },
+        setItem: async (name: string, value: string): Promise<void> =>
+          await chrome.storage.local.set({ [name]: value }),
+        removeItem: async (name: string): Promise<void> => chrome.storage.local.remove([name]),
       })),
   partialize: (state) => ({
     folders: state.folders,
     selectedFolder: state.selectedFolder,
     folderChildrens: state.folderChildrens,
   }),
-  onRehydrateStorage: (state) => {
-    return () => {
-      if (state.selectedFolder) {
-        state.setSelectedFolder(state.selectedFolder?.id);
-      }
-    };
-  },
 };
 
 export const bookmarkStore = createStore<BookmarkState>()(
@@ -81,17 +71,16 @@ export const bookmarkStore = createStore<BookmarkState>()(
 
           set({ rootParentsIds: bookmarksTree.map((item) => item.id) }, false, 'setNewRootParentsIds');
 
-          // set first folder as selected if there is no selected folder
+          set({ folders }, false, 'fetchFolders');
+
+          // set first folder as selected if there's no selected folder
           if (!get().selectedFolder && folders.length) {
             get().setSelectedFolder(folders[0].id);
           }
-
-          set({ folders }, false, 'fetchFolders');
         },
         selectedFolder: null,
         setSelectedFolder: async (id) => {
           const foundFolder = get().folders.find((folder) => folder.id === id);
-          console.log(get().folders);
           if (!foundFolder) {
             console.error(`Can't find folder with id=${id}`);
             return;
