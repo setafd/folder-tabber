@@ -4,7 +4,8 @@ import { Box, Button, Stack, Text } from '@mantine/core';
 
 import Packery from 'packery';
 
-import { BookmarkFolder, type BookmarkFolderProps, openTab, useBookmarkStore } from '@entities/bookmark';
+import { BookmarkFolder, type BookmarkFolderProps, useBookmarkStore } from '@entities/bookmark';
+import { openTab } from '@entities/tab';
 
 const GridContent: React.FC = () => {
   const { folderChildrens: bookmarks, selectedFolder } = useBookmarkStore();
