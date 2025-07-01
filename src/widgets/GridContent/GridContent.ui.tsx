@@ -12,7 +12,7 @@ const GridContent: React.FC = () => {
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const isEmpty = bookmarks.length === 0;
+  const isEmpty = bookmarks.length === 0 && selectedFolder;
 
   useEffect(() => {
     if (isEmpty) {

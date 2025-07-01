@@ -49,7 +49,7 @@ export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className
         <Divider pos="absolute" left={0} orientation="vertical" h="100%" />
         {bookmarkTree?.map((bookmark) => {
           if (bookmark.children) {
-            return <BookmarkFolder key={bookmark.id} title={bookmark.title} bookmarkTree={bookmark.children} />;
+            return <BookmarkFolder key={bookmark.id} title={bookmark.title} bookmarkTree={bookmark.children} onClickBookmark={onClickBookmark} />;
           }
 
           return <BookmarkItem key={bookmark.id} url={bookmark.url} title={bookmark.title} onClick={onClickBookmark} />;
