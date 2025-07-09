@@ -1,20 +1,20 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useCallback, useLayoutEffect, useRef } from 'react';
 
 import { Box, Button, Stack, Text } from '@mantine/core';
 
 import Packery from 'packery';
 
-import { BookmarkFolder, type BookmarkFolderProps, useBookmarkStore } from '@entities/bookmark';
+import { BookmarkFolder, type BookmarkFolderProps } from '@entities/bookmark';
 import { openTab } from '@entities/tab';
 
+import { useBookmarks } from './GridContent.lib';
+
 const GridContent: React.FC = () => {
-  const { folderChildrens: bookmarks, selectedFolder } = useBookmarkStore();
+  const { bookmarks, isEmpty, title } = useBookmarks();
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const isEmpty = bookmarks.length === 0 && selectedFolder;
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isEmpty) {
       return;
     }
@@ -26,14 +26,17 @@ const GridContent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarks]);
 
-  const onClickBookmark: BookmarkFolderProps['onClickBookmark'] = (event) => {
-    event.preventDefault();
-    const inCurrent = !event.ctrlKey;
-    const groupName = selectedFolder?.title;
-    const url = event.currentTarget.dataset.url!;
+  const onClickBookmark = useCallback<Required<BookmarkFolderProps>['onClickBookmark']>(
+    (event) => {
+      event.preventDefault();
+      const inCurrent = !event.ctrlKey;
+      const url = event.currentTarget.dataset.url!;
 
-    openTab(url, groupName!, inCurrent);
-  };
+      openTab(url, title!, inCurrent);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bookmarks],
+  );
 
   const onCreateBookmark = () => {
     // TBD

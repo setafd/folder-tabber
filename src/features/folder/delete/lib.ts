@@ -1,11 +1,20 @@
 import { modals } from '@mantine/modals';
 
-import { deleteBookmarkFolder, getSubTree } from '@entities/bookmark';
+import { bookmarkStore, deleteBookmark, deleteBookmarkTree, getSubTree } from '@entities/bookmark';
 
 export const useDeleteFolder = () => {
-  const onDeleteFolder = (id: string, force = false) => {
-    return deleteBookmarkFolder(id, force);
+  const onDeleteFolder = async (id: string, force = false) => {
+    const operation = force ? deleteBookmarkTree(id) : deleteBookmark(id);
+    bookmarkStore.setState(({ folders }) => ({ folders: folders.filter((folder) => folder.id !== id) }));
+    await operation
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        bookmarkStore.getState().fetchFolders();
+      });
   };
+
   const onDeleteFolderWrapper = async (id: string) => {
     const currentTree = await getSubTree(id);
 

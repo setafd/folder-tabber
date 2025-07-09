@@ -4,15 +4,17 @@ import { AppShell, MantineProvider } from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
 import { ModalsProvider } from '@mantine/modals';
 
+import { useStore } from 'zustand';
+
 import { GridContent } from '@widgets/GridContent';
 import { Header } from '@widgets/Header';
 
-import { useBookmarkStore } from '@entities/bookmark';
+import { bookmarkStore } from '@entities/bookmark';
 
 export const App: React.FC = () => {
   const preferredColorScheme = useColorScheme('light', { getInitialValueInEffect: false });
 
-  const { fetchFolders } = useBookmarkStore();
+  const fetchFolders = useStore(bookmarkStore, (state) => state.fetchFolders);
 
   useEffect(() => {
     fetchFolders();
