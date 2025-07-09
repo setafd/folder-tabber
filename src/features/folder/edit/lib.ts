@@ -1,19 +1,22 @@
 import { useState } from 'react';
 
-import { editBookmarkFolder } from '@entities/bookmark';
+import { bookmarkStore, editBookmark } from '@entities/bookmark';
 
 export const useRenameFolder = () => {
   const [currentId, setCurrentId] = useState<string | null>(null);
 
   const onEditFolder = async (id: string, title: string) => {
-    return editBookmarkFolder(id, { title })?.then(
-      () => {
-        setCurrentId(null);
-      },
-      (error) => {
+    bookmarkStore.setState(({ folders }) => {
+      return { folders: folders.map((folder) => (folder.id === id ? { ...folder, title } : folder)) };
+    });
+    setCurrentId(null);
+    await editBookmark(id, { title })
+      .catch((error) => {
         console.error(error);
-      },
-    );
+      })
+      .finally(() => {
+        bookmarkStore.getState().fetchFolders();
+      });
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {

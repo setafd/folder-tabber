@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 import { Anchor, Divider, Group, Image, Stack, StackProps, Text, Title } from '@mantine/core';
 
@@ -35,7 +35,12 @@ const BookmarkItem: React.FC<BookmarkItemProps> = ({ title, onClick, url }) => {
   );
 };
 
-export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className, bookmarkTree, onClickBookmark }) => {
+export const BookmarkFolder: React.FC<BookmarkFolderProps> = memo(function BookmarkFolder({
+  title,
+  className,
+  bookmarkTree,
+  onClickBookmark,
+}) {
   return (
     <Stack gap="xs" className={className} maw={250}>
       <Group wrap="nowrap" gap="xs">
@@ -49,7 +54,14 @@ export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className
         <Divider pos="absolute" left={0} orientation="vertical" h="100%" />
         {bookmarkTree?.map((bookmark) => {
           if (bookmark.children) {
-            return <BookmarkFolder key={bookmark.id} title={bookmark.title} bookmarkTree={bookmark.children} onClickBookmark={onClickBookmark} />;
+            return (
+              <BookmarkFolder
+                key={bookmark.id}
+                title={bookmark.title}
+                bookmarkTree={bookmark.children}
+                onClickBookmark={onClickBookmark}
+              />
+            );
           }
 
           return <BookmarkItem key={bookmark.id} url={bookmark.url} title={bookmark.title} onClick={onClickBookmark} />;
@@ -57,4 +69,4 @@ export const BookmarkFolder: React.FC<BookmarkFolderProps> = ({ title, className
       </Stack>
     </Stack>
   );
-};
+});
