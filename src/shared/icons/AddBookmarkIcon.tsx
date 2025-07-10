@@ -1,6 +1,15 @@
-const AddBookmarkIcon = () => {
+interface AddBookmarkIconProps extends React.ComponentPropsWithoutRef<'svg'> {
+  size?: number | string;
+}
+
+const AddBookmarkIcon: React.FC<AddBookmarkIconProps> = ({ size, style, ...others }) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 64 64"
+      style={{ width: size, height: size, ...style }}
+      {...others}
+    >
       <path
         d="M20 8h24a4 4 0 0 1 4 4v44l-16-8-16 8V12a4 4 0 0 1 4-4z"
         fill="#fde047"

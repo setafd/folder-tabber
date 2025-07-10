@@ -1,1 +1,1 @@
-export { useRenameFolder } from './lib';
+export { useRenameFolder } from './folder-edit.lib';

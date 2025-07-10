@@ -1,8 +1,54 @@
-.bookmarkItem {
-  color: var(--mantine-color-text);
-  transition: color 0.2s ease-in-out;
+.creteButton {
+  opacity: 0;
+
+  display: flex;
+  align-items: center;
 }
 
-.bookmarkItem:hover {
+.folderItem:hover .creteButton,
+.creteButton:focus-within {
+  opacity: 1;
+}
+
+.folderContent {
+  overflow-x: hidden;
+}
+
+.editFolderButton {
+  opacity: 0;
+
+  display: flex;
+  align-items: center;
+}
+
+.folderItem:hover .editFolderButton,
+.editFolderButton:focus-within {
+  opacity: 1;
+}
+
+
+
+// BookmarkItem
+.bookmarkLink {
+  color: var(--mantine-color-text);
+  transition: color 0.2s ease-in-out;
+
+  overflow-x: hidden;
+}
+
+.bookmarkLink:hover,
+.bookmarkLink:focus {
   color: var(--mantine-color-anchor);
+}
+
+.editBookmarkButton {
+  opacity: 0;
+
+  display: flex;
+  align-items: center;
+}
+
+.bookmarkItem:hover .bookmarkLink:not(:hover) ~ .editBookmarkButton,
+.editBookmarkButton:focus-within {
+  opacity: 1;
 }

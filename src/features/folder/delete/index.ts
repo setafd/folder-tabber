@@ -1,1 +1,1 @@
-export { useDeleteFolder } from './lib';
+export { useDeleteFolder } from './folder-delete.lib';

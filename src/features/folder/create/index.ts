@@ -1,1 +1,1 @@
-export { useCreateFolder } from './lib';
+export { useCreateFolder } from './folder-create.lib';

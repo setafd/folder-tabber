@@ -1,13 +1,17 @@
-const EditIcon = () => {
+interface IconProps extends React.ComponentPropsWithoutRef<'svg'> {
+  size?: number | string;
+}
+
+const EditIcon: React.FC<IconProps> = ({ size, style, ...others }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 64 64"
-      width="64"
-      height="64"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
+      style={{ width: size, height: size, ...style }}
+      {...others}
     >
       <path d="M44 8l12 12-28 28H16V36L44 8z" fill="currentColor" stroke="black" strokeLinejoin="round" />
 
