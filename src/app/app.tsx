@@ -9,6 +9,9 @@ import { useStore } from 'zustand';
 import { GridContent } from '@widgets/GridContent';
 import { Header } from '@widgets/Header';
 
+import { BookmarkCreateModal } from '@features/bookmark/create';
+import { BookmarkUpdateModal } from '@features/bookmark/edit';
+
 import { bookmarkStore } from '@entities/bookmark';
 
 export const App: React.FC = () => {
@@ -22,7 +25,7 @@ export const App: React.FC = () => {
 
   return (
     <MantineProvider forceColorScheme={preferredColorScheme}>
-      <ModalsProvider>
+      <ModalsProvider modals={{ 'create-bookmark': BookmarkCreateModal, 'edit-bookmark': BookmarkUpdateModal }}>
         <AppShell padding="sm" header={{ height: 60 }}>
           <AppShell.Header>
             <Header />
