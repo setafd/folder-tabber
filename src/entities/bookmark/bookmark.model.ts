@@ -1,5 +1,6 @@
 import { createStore } from 'zustand';
-import { type DevtoolsOptions, type PersistOptions, createJSONStorage, devtools, persist } from 'zustand/middleware';
+import { type PersistOptions, createJSONStorage, persist } from 'zustand/middleware';
+import { syncTabs } from 'zustand-sync-tabs';
 
 import { IS_DEV } from '@shared/config';
 
@@ -29,11 +30,6 @@ interface BookmarkState {
 
 type PersistedBookmarkState = Pick<BookmarkState, 'folders' | 'selectedFolder' | 'folderChildrens'>;
 
-const devtoolsOptions: DevtoolsOptions = {
-  name: 'bookmark-storage',
-  enabled: IS_DEV,
-};
-
 const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
   name: 'bookmark-storage',
   version: 1,
@@ -56,8 +52,8 @@ const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
 };
 
 export const bookmarkStore = createStore<BookmarkState>()(
-  devtools(
-    persist(
+  persist(
+    syncTabs(
       (set, get) => ({
         folders: [],
         fetchFolders: async () => {
@@ -72,9 +68,9 @@ export const bookmarkStore = createStore<BookmarkState>()(
             }));
 
           // TODO: Remove it from here
-          set({ rootParentsIds: bookmarksTree.map((item) => item.id) }, false, 'setNewRootParentsIds');
+          set({ rootParentsIds: bookmarksTree.map((item) => item.id) });
 
-          set({ folders }, false, 'fetchFolders');
+          set({ folders });
 
           // set first folder as selected if there's no selected folder
           if (!get().selectedFolder && folders.length) {
@@ -83,7 +79,7 @@ export const bookmarkStore = createStore<BookmarkState>()(
         },
         selectedFolder: null,
         resetSelectedFolder: () => {
-          set({ selectedFolder: null }, false, 'resetSelectedFolder');
+          set({ selectedFolder: null });
         },
         setSelectedFolder: async (id) => {
           const foundFolder = get().folders.find((folder) => folder.id === id);
@@ -92,7 +88,7 @@ export const bookmarkStore = createStore<BookmarkState>()(
             return;
           }
 
-          set({ selectedFolder: { id, title: foundFolder.title } }, false, 'setSelectedFolder');
+          set({ selectedFolder: { id, title: foundFolder.title } });
         },
         fetchFolderChildrens: async () => {
           const [folder] = await getSubTree(bookmarkStore.getState().selectedFolder?.id ?? '');
@@ -113,13 +109,13 @@ export const bookmarkStore = createStore<BookmarkState>()(
             [{ id: '-1', children: [], syncing: false, title: 'Default' }],
           );
 
-          set({ folderChildrens: mappedSubTree }, false, 'setFolderChildrens');
+          set({ folderChildrens: mappedSubTree });
         },
         folderChildrens: [],
         rootParentsIds: [],
       }),
-      persistOptions,
+      { name: 'bookmark-channel' },
     ),
-    devtoolsOptions,
+    persistOptions,
   ),
 );
