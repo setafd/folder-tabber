@@ -17,5 +17,5 @@ export const useBookmarks = () => {
 
   const isEmpty = folders.length === 0 && selectedFolder;
 
-  return { folders, isEmpty, title: selectedFolder?.title };
+  return { folders, isEmpty, title: selectedFolder?.title, folderId: selectedFolder?.id };
 };

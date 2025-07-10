@@ -8,19 +8,20 @@ import { useCreateBookmark } from './bookmark-create.lib';
 
 type ModalProps = {
   parentId?: string;
+  option?: 'Bookmark' | 'Folder';
 };
 
 const options = ['Bookmark', 'Folder'];
 
 export const BookmarkCreateModal = ({ context, id, innerProps }: ContextModalProps<ModalProps>) => {
-  const { parentId } = innerProps;
+  const { parentId, option = 'Bookmark' } = innerProps;
 
   const form = useForm({
     initialValues: {
       title: '',
       url: '',
       parentId: parentId ?? '',
-      option: 'Bookmark',
+      option,
     },
     validate: {
       title: (value) => (value.length > 0 ? null : 'Title is required'),

@@ -1,6 +1,6 @@
 import { memo, useCallback, useLayoutEffect, useRef } from 'react';
 
-import { Box, Button, Stack, Text } from '@mantine/core';
+import { ActionIcon, Box, Button, Stack, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 
 import Packery from 'packery';
@@ -10,15 +10,18 @@ import {
   BookmarkFolder,
   BookmarkItem,
   type BookmarkItemProps,
+  DEFAULT_FOLDER_ID,
   FolderChildren,
   bookmarkStore,
 } from '@entities/bookmark';
 import { openTab } from '@entities/tab';
 
+import { PlusIcon } from '@shared/icons/PlusIcon';
+
 import { useBookmarks } from './GridContent.lib';
 
 const GridContent: React.FC = () => {
-  const { folders, isEmpty, title } = useBookmarks();
+  const { folders, isEmpty, title, folderId } = useBookmarks();
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -46,13 +49,28 @@ const GridContent: React.FC = () => {
     [folders],
   );
 
-  const onCreateBookmark = useCallback((parentId?: string) => {
-    modals.openContextModal({ modal: 'create-bookmark', innerProps: { parentId }, title: 'Create bookmark' });
-  }, []);
+  const onCreateBookmark = useCallback(
+    (parentId?: string, option?: 'Bookmark' | 'Folder') => {
+      let parsedParentId = parentId;
+      if (parentId === DEFAULT_FOLDER_ID) {
+        parsedParentId = folderId;
+      }
+      modals.openContextModal({
+        modal: 'create-bookmark',
+        innerProps: { parentId: parsedParentId, option },
+        title: 'Create bookmark',
+      });
+    },
+    [folderId],
+  );
 
-  const onEditBookmark = useCallback(( type: 'Bookmark' | 'Folder', id: string, title: string, url?: string) => {
+  const onEditBookmark = useCallback((type: 'Bookmark' | 'Folder', id: string, title: string, url?: string) => {
     const modalTitle = type === 'Bookmark' ? 'Edit bookmark' : 'Edit folder';
-    modals.openContextModal({ modal: 'edit-bookmark', innerProps: { id, title, url, option: type }, title: modalTitle });
+    modals.openContextModal({
+      modal: 'edit-bookmark',
+      innerProps: { id, title, url, option: type },
+      title: modalTitle,
+    });
   }, []);
 
   if (isEmpty) {
@@ -68,6 +86,16 @@ const GridContent: React.FC = () => {
         onClickCreateButton={onCreateBookmark}
         onClickEditButton={onEditBookmark}
       />
+      <ActionIcon
+        pos="fixed"
+        bottom={16}
+        right={16}
+        size="input-md"
+        onClick={() => onCreateBookmark(folderId, 'Folder')}
+        radius={100}
+      >
+        <PlusIcon size={24} fill="white" />
+      </ActionIcon>
     </Box>
   );
 };

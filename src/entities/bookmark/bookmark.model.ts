@@ -5,6 +5,7 @@ import { syncTabs } from 'zustand-sync-tabs';
 import { IS_DEV } from '@shared/config';
 
 import { getBookmarksTree, getSubTree } from './bookmark.api';
+import { DEFAULT_FOLDER_ID } from './bookmark.const';
 
 interface TopLevelFolder {
   index: number;
@@ -106,7 +107,7 @@ export const bookmarkStore = createStore<BookmarkState>()(
 
               return acc;
             },
-            [{ id: '-1', children: [], syncing: false, title: 'Default' }],
+            [{ id: DEFAULT_FOLDER_ID, children: [], syncing: false, title: 'Default' }],
           );
 
           set({ folderChildrens: mappedSubTree });
