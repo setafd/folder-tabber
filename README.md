@@ -37,7 +37,7 @@ npm run build
 ```
 > Requires Node.js to be installed.
 
-3. Open the Extensions page in your browser: chrome://extensions/
+3. Open the Extensions page in your browser: `chrome://extensions/`
 4. Enable Developer mode (toggle switch in the top right corner).
 5. Click "Load unpacked" and select the build folder from the project directory.
 
