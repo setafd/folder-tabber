@@ -24,18 +24,29 @@ const GridContent: React.FC = () => {
   const { folders, isEmpty, title, folderId } = useBookmarks();
 
   const gridRef = useRef<HTMLDivElement>(null);
+  const packeryRef = useRef<typeof Packery | null>(null);
 
   useLayoutEffect(() => {
-    if (isEmpty) {
-      return;
+    if (isEmpty || !gridRef.current) return;
+
+    const grid = gridRef.current;
+
+    if (!packeryRef.current) {
+      packeryRef.current = new Packery(grid, {
+        itemSelector: '.element-item',
+        gutter: 8,
+        columnWidth: 250,
+      });
+    } else {
+      packeryRef.current.reloadItems();
+      packeryRef.current.layout();
     }
-    new Packery(gridRef.current, {
-      itemSelector: '.element-item',
-      gutter: 8,
-      columnWidth: 250,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folders]);
+
+    return () => {
+      packeryRef.current?.destroy();
+      packeryRef.current = null;
+    };
+  }, [folders, isEmpty]);
 
   const onClickBookmark = useCallback<Required<BookmarkItemProps>['onClick']>(
     (event) => {
