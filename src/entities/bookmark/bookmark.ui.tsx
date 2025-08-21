@@ -73,14 +73,16 @@ export const BookmarkFolder: React.FC<PropsWithChildren<BookmarkFolderProps>> = 
         <Title lineClamp={1} order={4} flex={1}>
           {title}
         </Title>
-        <Box className={styles.editFolderButton}>
-          <EditBookmarkButton
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit('Folder', id, title);
-            }}
-          />
-        </Box>
+        {id !== '-1' && (
+          <Box className={styles.editFolderButton}>
+            <EditBookmarkButton
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit('Folder', id, title);
+              }}
+            />
+          </Box>
+        )}
         <Box className={styles.creteButton}>
           <CreateBookmarkButton onClick={onClickCreateButton} />
         </Box>
