@@ -1,7 +1,6 @@
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 
 import { ActionIcon, Group, ScrollArea, Tabs, TextInput } from '@mantine/core';
-import { useHotkeys } from '@mantine/hooks';
 
 import { useStore } from 'zustand';
 
@@ -12,6 +11,7 @@ import { useRenameFolder } from '@features/folder/edit';
 import { bookmarkStore } from '@entities/bookmark';
 
 import { AddFolderIcon, DeleteSquareIcon } from '@shared/icons';
+import { useHotkeys } from '@shared/lib/useHotkeys';
 
 import { NUMBER_HOTKEYS } from './Header.const';
 import { getIndexByKeyboardNumber } from './Header.lib';
@@ -37,15 +37,23 @@ const Header: React.FC = () => {
   } = useRenameFolder();
   const { onDeleteFolder } = useDeleteFolder();
 
-  const onChangeFolder = (folderId: string | null) => {
+  const onChangeFolder = useCallback((folderId: string | null) => {
     if (folderId && folderId !== selectedFolder?.id) {
       setSelectedFolder(folderId);
     }
-  };
+  }, [selectedFolder?.id, setSelectedFolder]);
 
-  useHotkeys(
-    NUMBER_HOTKEYS.map((key) => [key, () => onChangeFolder(folders?.[getIndexByKeyboardNumber(key)]?.id || null)]),
+  const onNumberHotkey = useCallback(
+    (key: typeof NUMBER_HOTKEYS[number]) => {
+      const index = getIndexByKeyboardNumber(key);
+      if (index !== undefined) {
+        setSelectedFolder(folders[index]?.id);
+      }
+    },
+    [folders, setSelectedFolder]
   );
+
+  useHotkeys(NUMBER_HOTKEYS, onNumberHotkey);
 
   return (
     <Group h="100%" align="center" justify="space-between" wrap="nowrap" px="sm" gap="xl">
