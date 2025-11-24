@@ -11,7 +11,7 @@ import { useRenameFolder } from '@features/folder/edit';
 import { bookmarkStore } from '@entities/bookmark';
 
 import { AddFolderIcon, DeleteSquareIcon } from '@shared/icons';
-import { useHotkeys } from '@shared/lib/useHotkeys';
+import { useHotkeys } from '@shared/lib/react';
 
 import { NUMBER_HOTKEYS } from './Header.const';
 import { getIndexByKeyboardNumber } from './Header.lib';
@@ -37,20 +37,23 @@ const Header: React.FC = () => {
   } = useRenameFolder();
   const { onDeleteFolder } = useDeleteFolder();
 
-  const onChangeFolder = useCallback((folderId: string | null) => {
-    if (folderId && folderId !== selectedFolder?.id) {
-      setSelectedFolder(folderId);
-    }
-  }, [selectedFolder?.id, setSelectedFolder]);
+  const onChangeFolder = useCallback(
+    (folderId: string | null) => {
+      if (folderId && folderId !== selectedFolder?.id) {
+        setSelectedFolder(folderId);
+      }
+    },
+    [selectedFolder?.id, setSelectedFolder],
+  );
 
   const onNumberHotkey = useCallback(
-    (key: typeof NUMBER_HOTKEYS[number]) => {
+    (key: (typeof NUMBER_HOTKEYS)[number]) => {
       const index = getIndexByKeyboardNumber(key);
       if (index !== undefined) {
         setSelectedFolder(folders[index]?.id);
       }
     },
-    [folders, setSelectedFolder]
+    [folders, setSelectedFolder],
   );
 
   useHotkeys(NUMBER_HOTKEYS, onNumberHotkey);

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
 import { AppShell, MantineProvider } from '@mantine/core';
-import { useColorScheme } from '@mantine/hooks';
 import { ModalsProvider } from '@mantine/modals';
 
 import { useStore } from 'zustand';
@@ -13,6 +12,8 @@ import { BookmarkCreateModal } from '@features/bookmark/create';
 import { BookmarkUpdateModal } from '@features/bookmark/edit';
 
 import { bookmarkStore } from '@entities/bookmark';
+
+import { useColorScheme } from '@shared/lib/react';
 
 export const App: React.FC = () => {
   const preferredColorScheme = useColorScheme('light', { getInitialValueInEffect: false });
