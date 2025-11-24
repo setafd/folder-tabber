@@ -1,0 +1,27 @@
+.createInputContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.createInput {
+  padding: 0.325rem;
+  height: 2rem;
+  border-radius: 0.25rem;
+  width: 100%;
+  border: none;
+}
+
+.submitButton {
+  background-color: var(--background-color);
+  border: none;
+  cursor: pointer;
+  aspect-ratio: 1;
+  border-radius: 16rem;
+
+  &:hover {
+    filter: invert(0.1);
+  }
+}

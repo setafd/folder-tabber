@@ -16,7 +16,7 @@ import {
 } from '@entities/bookmark';
 import { openTab } from '@entities/tab';
 
-import { PlusIcon } from '@shared/icons/PlusIcon';
+import { PlusIcon } from '@shared/icons';
 
 import { useBookmarks } from './GridContent.lib';
 

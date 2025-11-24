@@ -1,8 +1,8 @@
-interface DeleteSquareIconProps extends React.ComponentPropsWithoutRef<'svg'> {
+interface IconProps extends React.ComponentPropsWithoutRef<'svg'> {
   size?: number | string;
 }
 
-const DeleteSquareIcon: React.FC<DeleteSquareIconProps> = ({ size, style, ...others }) => {
+const CheckIcon: React.FC<IconProps> = ({ size, style, ...others }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -17,10 +17,9 @@ const DeleteSquareIcon: React.FC<DeleteSquareIconProps> = ({ size, style, ...oth
       style={{ width: size, height: size, ...style }}
       {...others}
     >
-      <path d="M18 6 6 18" stroke="currentColor" />
-      <path d="m6 6 12 12" stroke="currentColor" />
+      <path d="M20 6 9 17l-5-5" />
     </svg>
   );
 };
 
-export default DeleteSquareIcon;
+export default CheckIcon;

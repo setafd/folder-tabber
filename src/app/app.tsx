@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 
-import { AppShell, MantineProvider } from '@mantine/core';
+import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 
 import { useStore } from 'zustand';
 
 import { GridContent } from '@widgets/GridContent';
-import { Header } from '@widgets/Header';
+import { Sidebar } from '@widgets/Sidebar';
 
 import { BookmarkCreateModal } from '@features/bookmark/create';
 import { BookmarkUpdateModal } from '@features/bookmark/edit';
@@ -14,6 +14,9 @@ import { BookmarkUpdateModal } from '@features/bookmark/edit';
 import { bookmarkStore } from '@entities/bookmark';
 
 import { useColorScheme } from '@shared/lib/react';
+import { MainLayout } from '@shared/ui/MainLayout';
+
+import './global.css';
 
 export const App: React.FC = () => {
   const preferredColorScheme = useColorScheme('light', { getInitialValueInEffect: false });
@@ -27,14 +30,9 @@ export const App: React.FC = () => {
   return (
     <MantineProvider forceColorScheme={preferredColorScheme}>
       <ModalsProvider modals={{ 'create-bookmark': BookmarkCreateModal, 'edit-bookmark': BookmarkUpdateModal }}>
-        <AppShell padding="sm" header={{ height: 60 }}>
-          <AppShell.Header>
-            <Header />
-          </AppShell.Header>
-          <AppShell.Main>
-            <GridContent />
-          </AppShell.Main>
-        </AppShell>
+        <MainLayout sidebar={<Sidebar />}>
+          <GridContent />
+        </MainLayout>
       </ModalsProvider>
     </MantineProvider>
   );

@@ -1,1 +1,1 @@
-export { useRenameFolder } from './folder-edit.lib';
+export { FolderEditItemWrapper } from './folder-edit.ui';

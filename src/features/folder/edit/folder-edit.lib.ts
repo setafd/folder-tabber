@@ -1,15 +1,23 @@
 import { useState } from 'react';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { bookmarkStore, editBookmark } from '@entities/bookmark';
 
-export const useRenameFolder = () => {
-  const [currentId, setCurrentId] = useState<string | null>(null);
+export const useRenameFolder = (id: string, title: string) => {
+  const [isInput, setIsInput] = useState(false);
+  const { register, handleSubmit } = useForm<{ title: string }>({
+    resolver: zodResolver(z.object({ title: z.string().nonempty() })),
+    defaultValues: { title },
+  });
 
-  const onEditFolder = async (id: string, title: string) => {
+  const onSubmit: SubmitHandler<{ title: string }> = async ({ title }) => {
     bookmarkStore.setState(({ folders }) => {
       return { folders: folders.map((folder) => (folder.id === id ? { ...folder, title } : folder)) };
     });
-    setCurrentId(null);
+    setIsInput(false);
     await editBookmark(id, { title })
       .catch((error) => {
         console.error(error);
@@ -20,24 +28,19 @@ export const useRenameFolder = () => {
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      if (event.currentTarget.value) {
-        onEditFolder(currentId!, event.currentTarget.value);
-      }
-    }
+    event.stopPropagation();
 
     if (event.key === 'Escape') {
-      setCurrentId(null);
+      setIsInput(false);
     }
   };
 
   return {
-    showInput: (id: string) => setCurrentId(id),
-    hideInput: () => setCurrentId(null),
-    editableId: currentId,
-    inputProps: {
-      onKeyDown,
-      autoFocus: true,
-    },
+    showInput: () => setIsInput(true),
+    hideInput: () => setIsInput(false),
+    register,
+    onSubmit: handleSubmit(onSubmit),
+    isInput: isInput,
+    onKeyDown,
   };
 };

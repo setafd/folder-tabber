@@ -2,7 +2,7 @@ interface IconProps extends React.ComponentPropsWithoutRef<'svg'> {
   size?: number | string;
 }
 
-export const PlusIcon: React.FC<IconProps> = ({ size, style, ...others }) => {
+const PlusIcon: React.FC<IconProps> = ({ size, style, ...others }) => {
   return (
     <svg
       viewBox="0 0 100 100"
@@ -15,3 +15,5 @@ export const PlusIcon: React.FC<IconProps> = ({ size, style, ...others }) => {
     </svg>
   );
 };
+
+export default PlusIcon;

@@ -1,0 +1,15 @@
+.layout {
+  height: 100dvh;
+  display: flex;
+  width: 100%;
+  gap: 1rem;
+}
+
+.sidebar {
+  --sidebar-width: 15rem;
+  width: var(--sidebar-width);
+}
+
+.content {
+  flex: 1;
+}

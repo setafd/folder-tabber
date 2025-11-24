@@ -1,0 +1,78 @@
+.navigation {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  height: 100%;
+  padding: 0.5rem;
+
+  overflow: auto;
+
+  gap: 1rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  gap: 0.25rem;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  padding-inline: 0.25rem;
+}
+
+.folderList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.folderWrapper {
+  position: relative;
+}
+
+.folderItem {
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: start;
+
+  border-radius: 0.3rem;
+  background-color: var(--background-color);
+
+  &:hover {
+    filter: invert(0.1);
+  }
+
+  &.active {
+    filter: invert(1);
+  }
+}
+
+.deleteButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  aspect-ratio: 1;
+  border-radius: 16rem;
+  height: 100%;
+
+  position: absolute;
+  right: 0;
+
+  color: red;
+}
+
+.deleteIcon {
+  opacity: 0;
+
+  .deleteButton:hover & {
+    opacity: 1;
+  }
+}

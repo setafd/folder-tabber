@@ -1,42 +1,36 @@
 import { useState } from 'react';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { bookmarkStore, createBookmark } from '@entities/bookmark';
 
-export const useCreateFolder = () => {
+export const useCreateFolder = (parentId: string) => {
   const [isInput, setIsInput] = useState(false);
+  const { register, handleSubmit } = useForm<{ title: string }>({
+    resolver: zodResolver(z.object({ title: z.string().nonempty() })),
+  });
 
-  const onCreateFolder = async (title: string) => {
-    const possibleParentsIds = bookmarkStore.getState().rootParentsIds;
-    if (possibleParentsIds.length === 0) {
-      return;
-    }
-
-    const parentId = possibleParentsIds[possibleParentsIds.length - 1];
-
-    const mappedFolder = {
-      index: 0,
-      id: 'new',
-      title: title,
-    };
-    bookmarkStore.setState(({ folders }) => ({ folders: [...folders, mappedFolder] }));
-
+  const onSubmit: SubmitHandler<{ title: string }> = async ({ title }) => {
     setIsInput(false);
+
     return createBookmark({ title, parentId })
+      .then((folder) => {
+        bookmarkStore
+          .getState()
+          .fetchFolders()
+          .then(() => {
+            bookmarkStore.getState().setSelectedFolder(folder.id, title);
+          });
+      })
       .catch((error) => {
         console.error(error);
-      })
-      .finally(() => {
-        bookmarkStore.getState().fetchFolders();
       });
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      if (event.currentTarget.value) {
-        onCreateFolder(event.currentTarget.value);
-      }
-    }
-
+    event.stopPropagation();
     if (event.key === 'Escape') {
       setIsInput(false);
     }
@@ -46,9 +40,8 @@ export const useCreateFolder = () => {
     showInput: () => setIsInput(true),
     hideInput: () => setIsInput(false),
     isInput,
-    inputProps: {
-      onKeyDown,
-      autoFocus: true,
-    },
+    register,
+    onKeyDown,
+    onSubmit: handleSubmit(onSubmit),
   };
 };

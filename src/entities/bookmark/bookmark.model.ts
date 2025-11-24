@@ -7,23 +7,28 @@ import { IS_DEV } from '@shared/config';
 import { getBookmarksTree, getSubTree } from './bookmark.api';
 import { DEFAULT_FOLDER_ID } from './bookmark.const';
 
-interface TopLevelFolder {
-  index: number;
+type Folder = {
   id: string;
   title: string;
+  index: number;
+};
+
+interface TopLevelFolder {
+  id: string;
+  title: string;
+  children: Folder[];
 }
 
 export type FolderChildren = chrome.bookmarks.BookmarkTreeNode;
 
 interface BookmarkState {
   folders: TopLevelFolder[];
-  fetchFolders: () => void;
+  fetchFolders: () => Promise<void>;
   selectedFolder: {
     id: string;
     title: string;
   } | null;
-  setSelectedFolder: (id: string) => void;
-  resetSelectedFolder: () => void;
+  setSelectedFolder: (id: string, title: string) => void;
   fetchFolderChildrens: () => void;
   folderChildrens: FolderChildren[];
   rootParentsIds: string[];
@@ -59,37 +64,28 @@ export const bookmarkStore = createStore<BookmarkState>()(
         folders: [],
         fetchFolders: async () => {
           const bookmarksTree = await getBookmarksTree();
-          const folders = bookmarksTree
-            .flatMap((topFolder) => topFolder.children ?? [])
-            ?.filter((folder) => folder.children)
-            .map((item, index) => ({
-              index,
-              id: item.id,
-              title: item.title,
-            }));
-
-          // TODO: Remove it from here
-          set({ rootParentsIds: bookmarksTree.map((item) => item.id) });
+          
+          const folders =
+            bookmarksTree.map((folder) => {
+              return {
+                id: folder.id,
+                title: folder.title,
+                children:
+                  folder.children?.map((child) => ({ id: child.id, title: child.title, index: child.index! })) ?? [],
+              };
+            }) ?? [];
 
           set({ folders });
 
           // set first folder as selected if there's no selected folder
-          if (!get().selectedFolder && folders.length) {
-            get().setSelectedFolder(folders[0].id);
+          if (!get().selectedFolder && folders.length && folders[0].children.length) {
+            const { id, title } = folders[0].children[0];
+            get().setSelectedFolder(id, title);
           }
         },
         selectedFolder: null,
-        resetSelectedFolder: () => {
-          set({ selectedFolder: null });
-        },
-        setSelectedFolder: async (id) => {
-          const foundFolder = get().folders.find((folder) => folder.id === id);
-          if (!foundFolder) {
-            console.error(`Can't find folder with id=${id}`);
-            return;
-          }
-
-          set({ selectedFolder: { id, title: foundFolder.title } });
+        setSelectedFolder: async (id, title) => {
+          set({ selectedFolder: { id, title } });
         },
         fetchFolderChildrens: async () => {
           const [folder] = await getSubTree(bookmarkStore.getState().selectedFolder?.id ?? '');

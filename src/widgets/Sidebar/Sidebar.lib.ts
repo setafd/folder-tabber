@@ -1,4 +1,4 @@
-import { NUMBER_HOTKEYS } from './Header.const';
+import { NUMBER_HOTKEYS } from './Sidebar.const';
 
 export const getIndexByKeyboardNumber = (number: (typeof NUMBER_HOTKEYS)[number]) => {
   if (number === '0') {

@@ -1,1 +1,1 @@
-export { useCreateFolder } from './folder-create.lib';
+export { FolderCreateItem } from './folder-create.ui';
