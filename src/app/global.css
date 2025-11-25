@@ -148,5 +148,5 @@ body {
   background-color: var(--background-color);
   color: var(--foreground-color);
 
-  font-family: Roboto;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
 }
