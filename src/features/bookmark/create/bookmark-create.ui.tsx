@@ -1,76 +1,103 @@
-import { Button, Group, SegmentedControl, Stack, TextInput } from '@mantine/core';
-import { useForm } from '@mantine/form';
 import { ContextModalProps } from '@mantine/modals';
 
-import { urlRegex } from '@shared/shared-values';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+import { Button } from '@shared/ui/Button';
+import { Input } from '@shared/ui/Input';
 
 import { useCreateBookmark } from './bookmark-create.lib';
 
-type ModalProps = {
+import styles from './bookmark-create.module.scss';
+
+type FormProps = {
   parentId?: string;
-  option?: 'Bookmark' | 'Folder';
+  option?: 'bookmark' | 'folder';
+  onFinish?: () => Promise<void>;
+  onCancel?: () => Promise<void>;
 };
 
-const options = ['Bookmark', 'Folder'];
+const schema = z
+  .object({
+    title: z.string().nonempty('Title is required'),
+    url: z.any(),
+    parentId: z.string().optional(),
+    option: z.enum(['folder']),
+  })
+  .or(
+    z.object({
+      title: z.string().nonempty('Title is required'),
+      url: z.string().nonempty().url('Invalid URL'),
+      option: z.enum(['bookmark']),
+      parentId: z.string().optional(),
+    }),
+  );
 
-export const BookmarkCreateModal = ({ context, id, innerProps }: ContextModalProps<ModalProps>) => {
-  const { parentId, option = 'Bookmark' } = innerProps;
+export const BookmarkCreateForm = ({ innerProps }: ContextModalProps<FormProps>) => {
+  const { parentId, option = 'bookmark', onFinish, onCancel } = innerProps;
 
-  const form = useForm({
-    initialValues: {
+  const { register, handleSubmit, watch } = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: {
       title: '',
       url: '',
       parentId: parentId ?? '',
       option,
     },
-    validate: {
-      title: (value) => (value.length > 0 ? null : 'Title is required'),
-      url: (value, values) => (urlRegex.test(value) || values.option === 'Folder' ? null : 'Invalid URL'),
-    },
   });
 
   const { createNewBookmark } = useCreateBookmark();
 
-  const onSubmit: Parameters<typeof form.onSubmit>[0] = async (values) => {
+  const onSubmit: SubmitHandler<z.infer<typeof schema>> = async (values) => {
     let operation;
-    if (values.option === 'Bookmark') {
+    if (values.option === 'bookmark') {
       operation = createNewBookmark({ index: 0, parentId: values.parentId, title: values.title, url: values.url });
     } else {
       operation = createNewBookmark({ index: 0, parentId: values.parentId, title: values.title });
     }
 
     await operation.then(() => {
-      context.closeModal(id);
+      onFinish?.();
     });
   };
 
+  const optionValue = watch('option');
+
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
-      <Stack gap={24}>
-        <SegmentedControl data={options} key={form.key('option')} {...form.getInputProps('option')} />
-        <TextInput
-          label="Title"
-          placeholder="Enter title"
-          withAsterisk
-          key={form.key('title')}
-          {...form.getInputProps('title')}
-        />
-        {form.values.option === 'Bookmark' && (
-          <TextInput
-            label="URL"
-            placeholder="Enter URL"
-            withAsterisk
-            key={form.key('url')}
-            {...form.getInputProps('url')}
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <div className={styles.radioContainer}>
+        <label htmlFor="option-folder" className={styles.radioLabel}>
+          <input className={styles.radioInput} {...register('option')} type="radio" value="folder" id="option-folder" />
+          Folder
+        </label>
+        <label htmlFor="option-bookmark" className={styles.radioLabel}>
+          <input
+            className={styles.radioInput}
+            {...register('option')}
+            type="radio"
+            value="bookmark"
+            id="option-bookmark"
           />
-        )}
-        <Group justify="flex-end">
-          <Button variant="default" type="reset" onClick={() => context.closeModal(id)}>
-            Cancel
-          </Button>
-          <Button type="submit">Create</Button>
-        </Group>
-      </Stack>
+          Bookmark
+        </label>
+      </div>
+      <div className={styles.formItem}>
+        <label htmlFor="title">Title</label>
+        <Input id="title" placeholder="Enter title" required {...register('title')} />
+      </div>
+      {optionValue === 'bookmark' && (
+        <div className={styles.formItem}>
+          <label htmlFor="url">URL</label>
+          <Input id="url" placeholder="Enter URL" required {...register('url')} />
+        </div>
+      )}
+      <div className={styles.footer}>
+        <Button variant="default" type="reset" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit">Create</Button>
+      </div>
     </form>
   );
 };

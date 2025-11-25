@@ -1,1 +1,1 @@
-export { BookmarkCreateModal } from './bookmark-create.ui';
+export { BookmarkCreateForm } from './bookmark-create.ui';

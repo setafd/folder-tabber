@@ -8,7 +8,7 @@ import { useStore } from 'zustand';
 import { GridContent } from '@widgets/GridContent';
 import { Sidebar } from '@widgets/Sidebar';
 
-import { BookmarkCreateModal } from '@features/bookmark/create';
+import { BookmarkCreateForm } from '@features/bookmark/create';
 import { BookmarkUpdateModal } from '@features/bookmark/edit';
 
 import { bookmarkStore } from '@entities/bookmark';
@@ -29,7 +29,7 @@ export const App: React.FC = () => {
 
   return (
     <MantineProvider forceColorScheme={preferredColorScheme}>
-      <ModalsProvider modals={{ 'create-bookmark': BookmarkCreateModal, 'edit-bookmark': BookmarkUpdateModal }}>
+      <ModalsProvider modals={{ 'create-bookmark': BookmarkCreateForm, 'edit-bookmark': BookmarkUpdateModal }}>
         <MainLayout sidebar={<Sidebar />}>
           <GridContent />
         </MainLayout>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { CheckIcon } from '@shared/icons';
+import { Button } from '@shared/ui/Button';
 
 import { useRenameFolder } from './folder-edit.lib';
 
@@ -34,9 +35,9 @@ export const FolderEditItemWrapper: React.FC<FolderEditItemProps> = ({ id, title
       {isInput ? (
         <form ref={ref} className={styles.createInputContainer} onSubmit={onSubmit}>
           <input autoFocus className={styles.createInput} onKeyDown={onKeyDown} {...register('title')} />
-          <button type="submit" className={styles.submitButton}>
+          <Button variant="icon" type="submit" className={styles.submitButton}>
             <CheckIcon size={20} />
-          </button>
+          </Button>
         </form>
       ) : (
         children(showInput)

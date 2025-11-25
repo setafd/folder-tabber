@@ -61,14 +61,19 @@ const GridContent: React.FC = () => {
   );
 
   const onCreateBookmark = useCallback(
-    (parentId?: string, option?: 'Bookmark' | 'Folder') => {
+    (parentId?: string, option?: 'bookmark' | 'folder') => {
       let parsedParentId = parentId;
       if (parentId === DEFAULT_FOLDER_ID) {
         parsedParentId = folderId;
       }
-      modals.openContextModal({
+      const context = modals.openContextModal({
         modal: 'create-bookmark',
-        innerProps: { parentId: parsedParentId, option },
+        innerProps: {
+          parentId: parsedParentId,
+          option,
+          onFinish: () => modals.close(context),
+          onCancel: () => modals.close(context),
+        },
         title: 'Create bookmark',
       });
     },
@@ -89,7 +94,7 @@ const GridContent: React.FC = () => {
   }
 
   return (
-    <Box ref={gridRef}>
+    <Box ref={gridRef} py={16}>
       <FolderWrapper
         folders={folders}
         className="element-item"
@@ -102,7 +107,7 @@ const GridContent: React.FC = () => {
         bottom={16}
         right={16}
         size="input-md"
-        onClick={() => onCreateBookmark(folderId, 'Folder')}
+        onClick={() => onCreateBookmark(folderId, 'folder')}
         radius={100}
       >
         <PlusIcon size={24} fill="white" />

@@ -10,6 +10,7 @@ import { bookmarkStore } from '@entities/bookmark';
 
 import { DeleteSquareIcon } from '@shared/icons';
 import { useHotkeys } from '@shared/lib/react';
+import { Button } from '@shared/ui/Button';
 
 import { NUMBER_HOTKEYS } from './Sidebar.const';
 import { getIndexByKeyboardNumber } from './Sidebar.lib';
@@ -65,9 +66,9 @@ export const Sidebar = () => {
                       </button>
                     )}
                   </FolderEditItemWrapper>
-                  <button className={styles.deleteButton} onClick={() => onDeleteFolder(folder.id)}>
+                  <Button variant='icon' className={styles.deleteButton} onClick={() => onDeleteFolder(folder.id)}>
                     <DeleteSquareIcon className={styles.deleteIcon} size={20} />
-                  </button>
+                  </Button>
                 </li>
               ))}
               <li>

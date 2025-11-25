@@ -1,0 +1,46 @@
+.form {
+  display: flex;
+  gap: 2rem;
+  flex-direction: column;
+}
+
+.radioContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+}
+
+.radioInput {
+  display: none;
+}
+
+.radioLabel {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--background-color);
+  cursor: pointer;
+
+  transition: all 0.2s ease-in-out;
+
+  &:has(.radioInput:checked) {
+    filter: invert(1);
+  }
+}
+
+.formItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}

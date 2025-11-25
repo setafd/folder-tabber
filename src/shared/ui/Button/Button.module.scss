@@ -1,0 +1,41 @@
+.button {
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+
+  border-radius: 0.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.default {
+  background-color: var(--background-color);
+
+  border: 1px solid var(--border-color);
+
+  &:hover {
+    filter: invert(0.1);
+  }
+}
+
+.primary {
+  background-color: var(--accent-color);
+
+  &:hover {
+    filter: brightness(1.2) saturate(1.25);
+  }
+}
+
+.icon {
+  background-color: transparent;
+  padding: 0.25rem;
+
+  height: 100%;
+
+  &:hover {
+    filter: invert(0.1);
+  }
+}
+
+.unstyled {
+  padding: 0;
+}

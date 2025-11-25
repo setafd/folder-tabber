@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { CheckIcon, PlusIcon } from '@shared/icons';
+import { Button } from '@shared/ui/Button';
 
 import { useCreateFolder } from './folder-create.lib';
 
@@ -9,10 +10,9 @@ import styles from './folder-create.module.scss';
 type FolderCreateItemProps = {
   parentId: string;
   buttonClassName?: string;
-  inputClassName?: string;
 };
 
-export const FolderCreateItem = ({ buttonClassName, inputClassName, parentId }: FolderCreateItemProps) => {
+export const FolderCreateItem = ({ buttonClassName, parentId }: FolderCreateItemProps) => {
   const ref = useRef<HTMLFormElement>(null);
   const { showInput, isInput, onSubmit, register, onKeyDown, hideInput } = useCreateFolder(parentId);
 
@@ -33,17 +33,17 @@ export const FolderCreateItem = ({ buttonClassName, inputClassName, parentId }: 
     <form ref={ref} className={styles.createInputContainer} onSubmit={onSubmit}>
       <input
         autoFocus
-        className={`${inputClassName} ${styles.createInput}`}
+        className={styles.createInput}
         onKeyDown={onKeyDown}
         {...register('title')}
       />
-      <button type="submit" className={styles.submitButton}>
+      <Button variant="icon" type="submit" className={styles.submitButton}>
         <CheckIcon size={20} />
-      </button>
+      </Button>
     </form>
   ) : (
-    <button onClick={showInput} className={`${buttonClassName} ${styles.createButton}`}>
+    <Button variant="unstyled" onClick={showInput} className={`${buttonClassName} ${styles.createButton}`}>
       <PlusIcon size={16} /> Create folder
-    </button>
+    </Button>
   );
 };
