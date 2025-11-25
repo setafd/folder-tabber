@@ -24,7 +24,7 @@ export type BookmarkItemProps = {
   title: string;
   url?: string;
   onClick: React.MouseEventHandler<HTMLButtonElement>;
-  onEdit: (type: 'Bookmark', id: string, title: string, url?: string) => void;
+  onEdit: (type: 'bookmark', id: string, title: string, url?: string) => void;
 };
 
 export const BookmarkItem: React.FC<BookmarkItemProps> = ({ id, title, url, onClick, onEdit }) => {
@@ -42,7 +42,7 @@ export const BookmarkItem: React.FC<BookmarkItemProps> = ({ id, title, url, onCl
         <EditBookmarkButton
           onClick={(e) => {
             e.stopPropagation();
-            onEdit('Bookmark', id, title, url);
+            onEdit('bookmark', id, title, url);
           }}
         />
       </Box>
@@ -55,7 +55,7 @@ export type BookmarkFolderProps = {
   title: string;
   className?: StackProps['className'];
   onClickCreateButton: () => void;
-  onEdit: (type: 'Folder', id: string, title: string) => void;
+  onEdit: (type: 'folder', id: string, title: string) => void;
 };
 
 export const BookmarkFolder: React.FC<PropsWithChildren<BookmarkFolderProps>> = memo(function BookmarkFolder({
@@ -78,7 +78,7 @@ export const BookmarkFolder: React.FC<PropsWithChildren<BookmarkFolderProps>> = 
             <EditBookmarkButton
               onClick={(e) => {
                 e.stopPropagation();
-                onEdit('Folder', id, title);
+                onEdit('folder', id, title);
               }}
             />
           </Box>

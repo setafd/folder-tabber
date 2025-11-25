@@ -80,11 +80,18 @@ const GridContent: React.FC = () => {
     [folderId],
   );
 
-  const onEditBookmark = useCallback((type: 'Bookmark' | 'Folder', id: string, title: string, url?: string) => {
-    const modalTitle = type === 'Bookmark' ? 'Edit bookmark' : 'Edit folder';
-    modals.openContextModal({
+  const onEditBookmark = useCallback((type: 'bookmark' | 'folder', id: string, title: string, url?: string) => {
+    const modalTitle = type === 'bookmark' ? 'Edit bookmark' : 'Edit folder';
+    const context = modals.openContextModal({
       modal: 'edit-bookmark',
-      innerProps: { id, title, url, option: type },
+      innerProps: {
+        id,
+        title,
+        url,
+        option: type,
+        onFinish: () => modals.close(context),
+        onCancel: () => modals.close(context),
+      },
       title: modalTitle,
     });
   }, []);
@@ -149,7 +156,7 @@ const FolderWrapper = ({
   className?: string;
   onClickBookmark: BookmarkItemProps['onClick'];
   onClickCreateButton: (parentId?: string) => void;
-  onClickEditButton: (type: 'Bookmark' | 'Folder', id: string, title: string, url?: string) => void;
+  onClickEditButton: (type: 'bookmark' | 'folder', id: string, title: string, url?: string) => void;
 }) => {
   return folders.map((folder) => {
     return (

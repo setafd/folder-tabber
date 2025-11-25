@@ -1,127 +1,106 @@
-import { useState } from 'react';
-
-import { Button, Group, Popover, Stack, Text, TextInput } from '@mantine/core';
-import { useForm } from '@mantine/form';
 import { ContextModalProps } from '@mantine/modals';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { useDeleteBookmark } from '@features/bookmark/delete';
 
-import { urlRegex } from '@shared/shared-values';
+import { Button } from '@shared/ui/Button';
+import { Input } from '@shared/ui/Input';
 
 import { useUpdateBookmark } from './bookmark-edit.lib';
+
+import styles from './bookmark-edit.module.scss';
 
 type ModalProps = {
   id: string;
   title: string;
   url?: string;
-  option: 'Bookmark' | 'Folder';
+  option: 'bookmark' | 'folder';
+  onFinish?: () => Promise<void>;
+  onCancel?: () => Promise<void>;
 };
 
-export const BookmarkUpdateModal = ({ context, id, innerProps }: ContextModalProps<ModalProps>) => {
-  const { id: bookmarkId, title, url = '', option } = innerProps;
+const schema = z
+  .object({
+    id: z.string(),
+    title: z.string().nonempty('Title is required'),
+    url: z.any(),
+    option: z.enum(['folder']),
+  })
+  .or(
+    z.object({
+      id: z.string(),
+      title: z.string().nonempty('Title is required'),
+      url: z.string().nonempty().url('Invalid URL'),
+      option: z.enum(['bookmark']),
+    }),
+  );
 
-  const [popoverOpened, setPopoverOpened] = useState(false);
+export const BookmarkUpdateModal = ({ innerProps }: ContextModalProps<ModalProps>) => {
+  const { id: bookmarkId, title, url = '', option, onCancel, onFinish } = innerProps;
 
   const { onDeleteBookmark } = useDeleteBookmark();
 
-  const form = useForm({
-    initialValues: {
+  const { register, handleSubmit } = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: {
       id: bookmarkId,
       title,
       url,
       option,
     },
-    validate: {
-      title: (value) => (value.length > 0 ? null : 'Title is required'),
-      url: (value, values) => (urlRegex.test(value) || values.option === 'Folder' ? null : 'Invalid URL'),
-    },
   });
 
   const { updateBookmark } = useUpdateBookmark();
 
-  const onSubmit: Parameters<typeof form.onSubmit>[0] = async (values) => {
+  const onSubmit: SubmitHandler<z.infer<typeof schema>> = async (values) => {
     let operation;
-    if (values.option === 'Bookmark') {
+    if (values.option === 'bookmark') {
       operation = updateBookmark(values.id, { title: values.title, url: values.url });
     } else {
       operation = updateBookmark(values.id, { title: values.title });
     }
 
     await operation.then(() => {
-      context.closeModal(id);
+      onFinish?.();
     });
   };
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
-      <Stack gap={24}>
-        <TextInput
-          label="Title"
-          placeholder="Enter title"
-          withAsterisk
-          key={form.key('title')}
-          {...form.getInputProps('title')}
-        />
-        {form.values.option === 'Bookmark' && (
-          <TextInput
-            label="URL"
-            placeholder="Enter URL"
-            withAsterisk
-            key={form.key('url')}
-            {...form.getInputProps('url')}
-          />
-        )}
-        <Group justify="space-between">
-          {option === 'Bookmark' ? (
-            <Button
-              style={{ justifySelf: 'flex-start' }}
-              variant="filled"
-              color="red"
-              onClick={() => onDeleteBookmark(form.values.id).then(() => context.closeModal(id))}
-            >
-              Delete
-            </Button>
-          ) : (
-            <Popover opened={popoverOpened} onChange={setPopoverOpened}>
-              <Popover.Target>
-                <Button
-                  style={{ justifySelf: 'flex-start' }}
-                  variant="filled"
-                  color="red"
-                  onClick={() => setPopoverOpened(true)}
-                >
-                  Delete
-                </Button>
-              </Popover.Target>
-              <Popover.Dropdown w={240}>
-                <Text size="sm">Are you sure you want to delete this folder and all its children?</Text>
-                <Group mt="xs" justify="flex-end" wrap="nowrap">
-                  <Button variant="default" onClick={() => setPopoverOpened(false)}>
-                    No
-                  </Button>
-                  <Button
-                    color="red"
-                    onClick={() => {
-                      setPopoverOpened(false);
-                      onDeleteBookmark(form.values.id, true).then(() => {
-                        context.closeModal(id);
-                      });
-                    }}
-                  >
-                    Yes
-                  </Button>
-                </Group>
-              </Popover.Dropdown>
-            </Popover>
-          )}
-          <Group>
-            <Button variant="default" type="reset" onClick={() => context.closeModal(id)}>
-              Cancel
-            </Button>
-            <Button type="submit">Update</Button>
-          </Group>
-        </Group>
-      </Stack>
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <div className={styles.formItem}>
+        <label htmlFor="title">Title</label>
+        <Input id="title" placeholder="Enter title" required {...register('title')} />
+      </div>
+      {option === 'bookmark' && (
+        <div className={styles.formItem}>
+          <label htmlFor="url">URL</label>
+          <Input id="url" placeholder="Enter URL" required {...register('url')} />
+        </div>
+      )}
+      <div className={styles.footer}>
+        <Button
+          style={{ justifySelf: 'flex-start' }}
+          variant="danger"
+          onClick={() => {
+            if (option === 'bookmark') {
+              onDeleteBookmark(bookmarkId).then(() => onFinish?.());
+            } else {
+              onDeleteBookmark(bookmarkId, true).then(() => onFinish?.());
+            }
+          }}
+        >
+          Delete
+        </Button>
+        <div className={styles.footerMainActions}>
+          <Button variant="default" type="reset" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">Update</Button>
+        </div>
+      </div>
     </form>
   );
 };

@@ -1,0 +1,22 @@
+.form {
+  display: flex;
+  gap: 2rem;
+  flex-direction: column;
+}
+
+.formItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.footerMainActions {
+  display: flex;
+  gap: 0.5rem;
+}

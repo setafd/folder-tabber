@@ -3,7 +3,7 @@ import { forwardRef } from 'react';
 import styles from './Button.module.scss';
 
 interface ButtonProps extends React.ComponentProps<'button'> {
-  variant?: 'default' | 'primary' | 'icon' | 'unstyled';
+  variant?: 'default' | 'primary' | 'icon' | 'unstyled' | 'danger';
 }
 
 const ButtonWrapper = forwardRef<HTMLButtonElement, ButtonProps>(function Button(

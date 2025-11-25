@@ -130,7 +130,8 @@ table {
   --foreground-light-color: #666666;
   --border-color: #dfdfdf;
 
-  --accent-color: #007aff;
+  --accent-color: #1971c2;
+  --danger-color: #e03131;
 }
 
 @media (prefers-color-scheme: dark) {
