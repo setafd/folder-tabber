@@ -113,7 +113,7 @@ const GridContent: React.FC = () => {
         style={{ position: 'fixed', right: 16, bottom: 16, padding: '0.5rem', borderRadius: 100, height: '2.5rem' }}
         onClick={() => onCreateBookmark(folderId, 'folder')}
       >
-        <PlusIcon size={24} fill="white" />
+        <PlusIcon size={24} color="white" />
       </Button>
     </div>
   );
