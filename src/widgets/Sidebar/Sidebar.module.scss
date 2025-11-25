@@ -72,7 +72,7 @@
 .deleteIcon {
   opacity: 0;
 
-  .deleteButton:hover & {
+  .deleteButton:hover &, .deleteButton:focus & {
     opacity: 1;
   }
 }

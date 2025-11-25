@@ -1,54 +1,98 @@
-.creteButton {
-  opacity: 0;
+// BookmarkFolder
 
+.folderContainer {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  max-width: 250px;
 }
 
-.folderItem:hover .creteButton,
-.creteButton:focus-within {
-  opacity: 1;
+.folderItem {
+  position: relative;
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  padding: 0.25rem;
+}
+
+.folderTitle {
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 1.125rem;
+  font-weight: 600;
+
+  flex: 1;
 }
 
 .folderContent {
-  overflow-x: hidden;
-}
-
-.editFolderButton {
-  opacity: 0;
-
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  padding-left: 0.625rem;
+
+  position: relative;
 }
 
-.folderItem:hover .editFolderButton,
-.editFolderButton:focus-within {
-  opacity: 1;
+.divider {
+  position: absolute;
+  left: 0;
+  height: 100%;
+  width: 1px;
+  background-color: var(--border-color);
 }
-
-
 
 // BookmarkItem
+
+.bookmarkItem {
+  position: relative;
+  display: flex;
+  gap: 0.125rem;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  padding: 0.25rem;
+}
+
 .bookmarkLink {
-  color: var(--mantine-color-text);
-  transition: color 0.2s ease-in-out;
-
-  overflow-x: hidden;
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  align-items: center;
+  padding: 0.25rem;
 }
 
-.bookmarkLink:hover,
-.bookmarkLink:focus {
-  color: var(--mantine-color-anchor);
+.bookmarkTitle {
+  line-height: 1.25;
+  font-size: 0.875rem;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .bookmarkLink:hover &, .bookmarkLink:focus & {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.125rem;
+    text-decoration-color: var(--accent-color);
+    color: var(--accent-color)
+  }
 }
 
-.editBookmarkButton {
+
+.iconButton {
+  height: auto;
+  display: flex;
+  align-items: center;  
+}
+
+.buttonIcon {
   opacity: 0;
 
-  display: flex;
-  align-items: center;
-}
+  transition: opacity 0.2s ease-in-out;
 
-.bookmarkItem:hover .bookmarkLink:not(:hover) ~ .editBookmarkButton,
-.editBookmarkButton:focus-within {
-  opacity: 1;
+  .iconButton:hover &,
+  .iconButton:focus & {
+    opacity: 1;
+  }
 }

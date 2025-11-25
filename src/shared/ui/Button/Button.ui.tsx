@@ -10,7 +10,7 @@ const ButtonWrapper = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   { className, variant = 'primary', ...props },
   ref,
 ) {
-  return <button className={`${className} ${styles[variant]} ${styles.button}`} ref={ref} {...props} />;
+  return <button className={`${className ?? ''} ${styles[variant]} ${styles.button}`} ref={ref} {...props} />;
 });
 
 export default ButtonWrapper;
