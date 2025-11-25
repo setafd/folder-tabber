@@ -1,6 +1,5 @@
 import { memo, useCallback, useLayoutEffect, useRef } from 'react';
 
-import { ActionIcon, Box, Button, Stack, Text } from '@mantine/core';
 import { modals } from '@mantine/modals';
 
 import Packery from 'packery';
@@ -17,6 +16,7 @@ import {
 import { openTab } from '@entities/tab';
 
 import { PlusIcon } from '@shared/icons';
+import { Button } from '@shared/ui/Button';
 
 import { useBookmarks } from './GridContent.lib';
 
@@ -101,7 +101,7 @@ const GridContent: React.FC = () => {
   }
 
   return (
-    <Box ref={gridRef} py={16}>
+    <div ref={gridRef} style={{ padding: '1rem' }}>
       <FolderWrapper
         folders={folders}
         className="element-item"
@@ -109,17 +109,13 @@ const GridContent: React.FC = () => {
         onClickCreateButton={onCreateBookmark}
         onClickEditButton={onEditBookmark}
       />
-      <ActionIcon
-        pos="fixed"
-        bottom={16}
-        right={16}
-        size="input-md"
+      <Button
+        style={{ position: 'fixed', right: 16, bottom: 16, padding: '0.5rem', borderRadius: 100, height: '2.5rem' }}
         onClick={() => onCreateBookmark(folderId, 'folder')}
-        radius={100}
       >
         <PlusIcon size={24} fill="white" />
-      </ActionIcon>
-    </Box>
+      </Button>
+    </div>
   );
 };
 
@@ -132,16 +128,20 @@ type EmptyContentProps = {
 const EmptyContent: React.FC<EmptyContentProps> = ({ onCreateBookmark }) => {
   const parentId = useStore(bookmarkStore, (state) => state.selectedFolder?.id);
   return (
-    <Stack
-      align="center"
-      justify="center"
-      h="calc(100vh - var(--app-shell-header-height, 0px) - var(--app-shell-padding) * 2)"
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100dvh',
+      }}
     >
-      <Text>No bookmarks found in this folder</Text>
-      <Button onClick={() => onCreateBookmark(parentId)} variant="subtle">
+      <h2>No bookmarks found in this folder</h2>
+      <Button onClick={() => onCreateBookmark(parentId)} variant="default">
         Add bookmark
       </Button>
-    </Stack>
+    </div>
   );
 };
 
