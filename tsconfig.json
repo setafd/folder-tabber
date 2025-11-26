@@ -27,28 +27,20 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path Aliases */
-    "noUncheckedSideEffectImports": true,
     "baseUrl": "./src",
     "paths": {
-      "@app": ["./app"],
       "@app/*": ["./app/*"],
 
-      "@pages": ["./pages"],
       "@pages/*": ["./pages/*"],
 
-      "@widgets": ["./widgets"],
       "@widgets/*": ["./widgets/*"],
 
-      "@features": ["./features"],
       "@features/*": ["./features/*"],
 
-      "@entities": ["./entities"],
       "@entities/*": ["./entities/*"],
 
-      "@shared": ["./shared"],
       "@shared/*": ["./shared/*"]
     },
   },
-  "include": ["src"],
-  "skipLibCheck": true,
+  "include": ["src"]
 }
