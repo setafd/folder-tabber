@@ -1,22 +1,15 @@
-import { ContextModalProps } from '@mantine/modals';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@shared/ui/Button';
 import { Input } from '@shared/ui/Input';
+import { Modal } from '@shared/ui/Modal';
 
 import { useCreateBookmark } from './bookmark-create.lib';
+import { useCreateBookmarkState } from './bookmark-create.model';
 
 import styles from './bookmark-create.module.scss';
-
-type FormProps = {
-  parentId?: string;
-  option?: 'bookmark' | 'folder';
-  onFinish?: () => Promise<void>;
-  onCancel?: () => Promise<void>;
-};
 
 const schema = z
   .object({
@@ -34,9 +27,25 @@ const schema = z
     }),
   );
 
-export const BookmarkCreateForm = ({ innerProps }: ContextModalProps<FormProps>) => {
-  const { parentId, option = 'bookmark', onFinish, onCancel } = innerProps;
+export const BookmarkCreateFormModal = () => {
+  const { open, parentId, option, onClose } = useCreateBookmarkState();
 
+  return (
+    <Modal open={open} onClose={onClose} title={option === 'bookmark' ? 'Create bookmark' : 'Create folder'}>
+      <BookmarkCreateForm parentId={parentId} option={option} onClose={onClose} />
+    </Modal>
+  );
+};
+
+export const BookmarkCreateForm = ({
+  parentId,
+  option,
+  onClose,
+}: {
+  parentId?: string;
+  option?: 'bookmark' | 'folder';
+  onClose: () => void;
+}) => {
   const { register, handleSubmit, watch } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -58,7 +67,7 @@ export const BookmarkCreateForm = ({ innerProps }: ContextModalProps<FormProps>)
     }
 
     await operation.then(() => {
-      onFinish?.();
+      onClose();
     });
   };
 
@@ -93,7 +102,7 @@ export const BookmarkCreateForm = ({ innerProps }: ContextModalProps<FormProps>)
         </div>
       )}
       <div className={styles.footer}>
-        <Button variant="default" type="reset" onClick={onCancel}>
+        <Button variant="default" type="reset" onClick={onClose}>
           Cancel
         </Button>
         <Button type="submit">Create</Button>

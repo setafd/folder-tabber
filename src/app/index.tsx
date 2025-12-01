@@ -1,7 +1,5 @@
 import React from 'react';
 
-import '@mantine/core/styles.css';
-
 import ReactDOM from 'react-dom/client';
 
 import { mockChrome } from '@shared/chrome-api-mock';

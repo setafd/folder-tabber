@@ -3,14 +3,12 @@ import { useCallback } from 'react';
 import { useStore } from 'zustand';
 
 import { FolderCreateItem } from '@features/folder/create';
-import { useDeleteFolder } from '@features/folder/delete';
+import { FolderDeleteButton, FolderDeleteConfirmModal } from '@features/folder/delete';
 import { FolderEditItemWrapper } from '@features/folder/edit';
 
 import { bookmarkStore } from '@entities/bookmark';
 
-import { DeleteSquareIcon } from '@shared/icons';
 import { useHotkeys } from '@shared/lib/react';
-import { Button } from '@shared/ui/Button';
 
 import { NUMBER_HOTKEYS } from './Sidebar.const';
 import { getIndexByKeyboardNumber } from './Sidebar.lib';
@@ -21,8 +19,6 @@ export const Sidebar = () => {
   const folders = useStore(bookmarkStore, (state) => state.folders);
   const selectedFolderId = useStore(bookmarkStore, (state) => state.selectedFolder?.id);
   const setSelectedFolder = useStore(bookmarkStore, (state) => state.setSelectedFolder);
-
-  const { onDeleteFolder } = useDeleteFolder();
 
   const onChangeFolder = useCallback(
     (id: string, title: string) => {
@@ -66,9 +62,7 @@ export const Sidebar = () => {
                       </button>
                     )}
                   </FolderEditItemWrapper>
-                  <Button variant="icon" className={styles.deleteButton} onClick={() => onDeleteFolder(folder.id)}>
-                    <DeleteSquareIcon className={styles.deleteIcon} size={20} />
-                  </Button>
+                  <FolderDeleteButton id={folder.id} />
                 </li>
               ))}
               <li>
@@ -78,6 +72,7 @@ export const Sidebar = () => {
           </section>
         );
       })}
+      <FolderDeleteConfirmModal />
     </nav>
   );
 };

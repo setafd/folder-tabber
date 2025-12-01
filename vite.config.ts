@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react';
+import sass from 'sass';
+import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
-import sass from 'sass';
 
 export default defineConfig({
   plugins: [
@@ -13,7 +13,7 @@ export default defineConfig({
         {
           src: 'public/manifest.json',
           dest: '.',
-        }
+        },
       ],
     }),
   ],
@@ -32,11 +32,9 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        implementation: sass,
-        sassOptions: {
-          outputStyle: 'expanded',
-        },
-      }
-    }
+        api: 'modern',
+        style: 'expanded',
+      },
+    },
   },
 });

@@ -1,0 +1,39 @@
+.deleteButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  aspect-ratio: 1;
+  border-radius: 16rem;
+  height: 100%;
+
+  position: absolute;
+  right: 0;
+
+  color: red;
+}
+
+.deleteIcon {
+  opacity: 0;
+
+  .deleteButton:hover &,
+  .deleteButton:focus & {
+    opacity: 1;
+  }
+}
+
+.deleteConfirmModal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 25rem;
+
+  & .description {
+    line-height: 1.5;
+  }
+
+  & .footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+}

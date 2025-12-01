@@ -1,0 +1,16 @@
+.modal {
+  background-color: var(--background-color);
+  margin-top: 5vh;
+
+  & :global(.react-responsive-modal-closeButton) {
+    fill: var(--foreground-color);
+  }
+}
+
+.title {
+  font-size: 1.125rem;
+}
+
+.modalContent {
+  padding-top: 2rem;
+}

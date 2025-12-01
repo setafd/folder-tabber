@@ -58,11 +58,6 @@ export default tseslint.config(
               position: 'before',
             },
             {
-              pattern: '@mantine/*',
-              group: 'external',
-              position: 'before',
-            },
-            {
               pattern: '@app/**',
               group: 'internal',
               position: 'before',

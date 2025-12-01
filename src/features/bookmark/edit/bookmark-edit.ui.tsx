@@ -1,5 +1,3 @@
-import { ContextModalProps } from '@mantine/modals';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -8,18 +6,19 @@ import { useDeleteBookmark } from '@features/bookmark/delete';
 
 import { Button } from '@shared/ui/Button';
 import { Input } from '@shared/ui/Input';
+import { Modal } from '@shared/ui/Modal';
 
 import { useUpdateBookmark } from './bookmark-edit.lib';
+import { useEditBookmarkState } from './bookmark-edit.model';
 
 import styles from './bookmark-edit.module.scss';
 
-type ModalProps = {
+type FormProps = {
   id: string;
   title: string;
   url?: string;
   option: 'bookmark' | 'folder';
-  onFinish?: () => Promise<void>;
-  onCancel?: () => Promise<void>;
+  onClose: () => void;
 };
 
 const schema = z
@@ -38,8 +37,18 @@ const schema = z
     }),
   );
 
-export const BookmarkUpdateModal = ({ innerProps }: ContextModalProps<ModalProps>) => {
-  const { id: bookmarkId, title, url = '', option, onCancel, onFinish } = innerProps;
+export const BookmarkUpdateModal = () => {
+  const { open, id, title, url, option, onClose } = useEditBookmarkState();
+
+  return (
+    <Modal open={open} onClose={onClose} title={option === 'bookmark' ? 'Update bookmark' : 'Update folder'}>
+      <BookmarkUpdateForm id={id!} title={title!} url={url} option={option!} onClose={onClose} />
+    </Modal>
+  );
+};
+
+export const BookmarkUpdateForm = (props: FormProps) => {
+  const { id: bookmarkId, title, url = '', option, onClose } = props;
 
   const { onDeleteBookmark } = useDeleteBookmark();
 
@@ -64,7 +73,7 @@ export const BookmarkUpdateModal = ({ innerProps }: ContextModalProps<ModalProps
     }
 
     await operation.then(() => {
-      onFinish?.();
+      onClose()
     });
   };
 
@@ -86,16 +95,16 @@ export const BookmarkUpdateModal = ({ innerProps }: ContextModalProps<ModalProps
           variant="danger"
           onClick={() => {
             if (option === 'bookmark') {
-              onDeleteBookmark(bookmarkId).then(() => onFinish?.());
+              onDeleteBookmark(bookmarkId).then(onClose);
             } else {
-              onDeleteBookmark(bookmarkId, true).then(() => onFinish?.());
+              onDeleteBookmark(bookmarkId, true).then(onClose);
             }
           }}
         >
           Delete
         </Button>
         <div className={styles.footerMainActions}>
-          <Button variant="default" type="reset" onClick={onCancel}>
+          <Button variant="default" type="reset" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit">Update</Button>

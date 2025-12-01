@@ -10,7 +10,7 @@ export const FolderWrapper = ({
   folders: FolderChildren[];
   className?: string;
   onClickBookmark: BookmarkItemProps['onClick'];
-  onClickCreateButton: (parentId?: string) => void;
+  onClickCreateButton: (parentId: string) => void;
   onClickEditButton: (type: 'bookmark' | 'folder', id: string, title: string, url?: string) => void;
 }) => {
   return folders.map((folder) => {

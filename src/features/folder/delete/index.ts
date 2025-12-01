@@ -1,1 +1,1 @@
-export { useDeleteFolder } from './folder-delete.lib';
+export { FolderDeleteButton, FolderDeleteConfirmModal } from './folder-delete.ui';

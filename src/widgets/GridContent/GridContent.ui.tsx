@@ -1,8 +1,9 @@
 import { memo, useCallback, useLayoutEffect, useRef } from 'react';
 
-import { modals } from '@mantine/modals';
-
 import Packery from 'packery';
+
+import { BookmarkCreateFormModal, useCreateBookmarkState } from '@features/bookmark/create';
+import { BookmarkUpdateModal, useEditBookmarkState } from '@features/bookmark/edit';
 
 import { type BookmarkItemProps, DEFAULT_FOLDER_ID } from '@entities/bookmark';
 import { openTab } from '@entities/tab';
@@ -15,6 +16,9 @@ import { EmptyContent, FolderWrapper } from './ui';
 
 const GridContent: React.FC = () => {
   const { folders, isEmpty, title, folderId } = useBookmarks();
+
+  const { setOpen: openCreateModal } = useCreateBookmarkState();
+  const { setOpen: openEditModal } = useEditBookmarkState();
 
   const gridRef = useRef<HTMLDivElement>(null);
   const packeryRef = useRef<typeof Packery | null>(null);
@@ -54,61 +58,45 @@ const GridContent: React.FC = () => {
   );
 
   const onCreateBookmark = useCallback(
-    (parentId?: string, option?: 'bookmark' | 'folder') => {
+    (parentId?: string, option: 'bookmark' | 'folder' = 'bookmark') => {
       let parsedParentId = parentId;
-      if (parentId === DEFAULT_FOLDER_ID) {
-        parsedParentId = folderId;
+      if (!parsedParentId || parsedParentId === DEFAULT_FOLDER_ID) {
+        parsedParentId = folderId!;
       }
-      const context = modals.openContextModal({
-        modal: 'create-bookmark',
-        innerProps: {
-          parentId: parsedParentId,
-          option,
-          onFinish: () => modals.close(context),
-          onCancel: () => modals.close(context),
-        },
-        title: 'Create bookmark',
-      });
+      openCreateModal(parsedParentId, option);
     },
-    [folderId],
+    [folderId, openCreateModal],
   );
 
-  const onEditBookmark = useCallback((type: 'bookmark' | 'folder', id: string, title: string, url?: string) => {
-    const modalTitle = type === 'bookmark' ? 'Edit bookmark' : 'Edit folder';
-    const context = modals.openContextModal({
-      modal: 'edit-bookmark',
-      innerProps: {
-        id,
-        title,
-        url,
-        option: type,
-        onFinish: () => modals.close(context),
-        onCancel: () => modals.close(context),
-      },
-      title: modalTitle,
-    });
-  }, []);
+  const onEditBookmark = useCallback((type: 'bookmark' | 'folder' = 'bookmark', id: string, title: string, url?: string) => {
+
+    openEditModal(id, title, url, type);
+  }, [openEditModal]);
 
   if (isEmpty) {
     return <EmptyContent onCreateBookmark={onCreateBookmark} />;
   }
 
   return (
-    <div ref={gridRef} style={{ padding: '1rem' }}>
-      <FolderWrapper
-        folders={folders}
-        className="element-item"
-        onClickBookmark={onClickBookmark}
-        onClickCreateButton={onCreateBookmark}
-        onClickEditButton={onEditBookmark}
-      />
-      <Button
-        style={{ position: 'fixed', right: 16, bottom: 16, padding: '0.5rem', borderRadius: 100, height: '2.5rem' }}
-        onClick={() => onCreateBookmark(folderId, 'folder')}
-      >
-        <PlusIcon size={24} color="white" />
-      </Button>
-    </div>
+    <>
+      <div ref={gridRef} style={{ padding: '1rem' }}>
+        <FolderWrapper
+          folders={folders}
+          className="element-item"
+          onClickBookmark={onClickBookmark}
+          onClickCreateButton={onCreateBookmark}
+          onClickEditButton={onEditBookmark}
+        />
+        <Button
+          style={{ position: 'fixed', right: 16, bottom: 16, padding: '0.5rem', borderRadius: 100, height: '2.5rem' }}
+          onClick={() => onCreateBookmark(folderId!, 'folder')}
+        >
+          <PlusIcon size={24} color="white" />
+        </Button>
+      </div>
+      <BookmarkCreateFormModal />
+      <BookmarkUpdateModal />
+    </>
   );
 };
 
