@@ -3,22 +3,15 @@ import { memo, useCallback, useLayoutEffect, useRef } from 'react';
 import { modals } from '@mantine/modals';
 
 import Packery from 'packery';
-import { useStore } from 'zustand';
 
-import {
-  BookmarkFolder,
-  BookmarkItem,
-  type BookmarkItemProps,
-  DEFAULT_FOLDER_ID,
-  FolderChildren,
-  bookmarkStore,
-} from '@entities/bookmark';
+import { type BookmarkItemProps, DEFAULT_FOLDER_ID } from '@entities/bookmark';
 import { openTab } from '@entities/tab';
 
 import { PlusIcon } from '@shared/icons';
 import { Button } from '@shared/ui/Button';
 
 import { useBookmarks } from './GridContent.lib';
+import { EmptyContent, FolderWrapper } from './ui';
 
 const GridContent: React.FC = () => {
   const { folders, isEmpty, title, folderId } = useBookmarks();
@@ -120,75 +113,3 @@ const GridContent: React.FC = () => {
 };
 
 export default memo(GridContent);
-
-type EmptyContentProps = {
-  onCreateBookmark: (parentId?: string) => void;
-};
-
-const EmptyContent: React.FC<EmptyContentProps> = ({ onCreateBookmark }) => {
-  const parentId = useStore(bookmarkStore, (state) => state.selectedFolder?.id);
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100dvh',
-      }}
-    >
-      <h2>No bookmarks found in this folder</h2>
-      <Button onClick={() => onCreateBookmark(parentId)} variant="default">
-        Add bookmark
-      </Button>
-    </div>
-  );
-};
-
-const FolderWrapper = ({
-  folders,
-  className,
-  onClickBookmark,
-  onClickCreateButton,
-  onClickEditButton,
-}: {
-  folders: FolderChildren[];
-  className?: string;
-  onClickBookmark: BookmarkItemProps['onClick'];
-  onClickCreateButton: (parentId?: string) => void;
-  onClickEditButton: (type: 'bookmark' | 'folder', id: string, title: string, url?: string) => void;
-}) => {
-  return folders.map((folder) => {
-    return (
-      <BookmarkFolder
-        key={folder.id}
-        id={folder.id}
-        title={folder.title}
-        className={className}
-        onClickCreateButton={() => onClickCreateButton(folder.id)}
-        onEdit={onClickEditButton}
-      >
-        {folder.children?.map((bookmark) => {
-          return bookmark.children ? (
-            <FolderWrapper
-              key={bookmark.id}
-              folders={[bookmark]}
-              onClickBookmark={onClickBookmark}
-              onClickCreateButton={() => onClickCreateButton(bookmark.id)}
-              onClickEditButton={onClickEditButton}
-            />
-          ) : (
-            <BookmarkItem
-              key={bookmark.id}
-              id={bookmark.id}
-              url={bookmark.url}
-              title={bookmark.title}
-              onClick={onClickBookmark}
-              onEdit={onClickEditButton}
-            />
-          );
-        })}
-      </BookmarkFolder>
-    );
-  });
-};

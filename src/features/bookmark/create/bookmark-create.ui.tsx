@@ -22,8 +22,8 @@ const schema = z
   .object({
     title: z.string().nonempty('Title is required'),
     url: z.any(),
-    parentId: z.string().optional(),
     option: z.enum(['folder']),
+    parentId: z.string().optional(),
   })
   .or(
     z.object({

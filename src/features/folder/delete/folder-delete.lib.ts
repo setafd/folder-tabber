@@ -11,6 +11,7 @@ export const useDeleteFolder = () => {
         console.error(error);
       })
       .finally(() => {
+        bookmarkStore.getState().setSelectedFolder(null);
         bookmarkStore.getState().fetchFolders();
       });
   };

@@ -21,7 +21,8 @@ export const useCreateFolder = (parentId: string) => {
           .getState()
           .fetchFolders()
           .then(() => {
-            bookmarkStore.getState().setSelectedFolder(folder.id, title);
+            const newFolder = { id: folder.id, title };
+            bookmarkStore.getState().setSelectedFolder(newFolder);
           });
       })
       .catch((error) => {

@@ -28,7 +28,7 @@ interface BookmarkState {
     id: string;
     title: string;
   } | null;
-  setSelectedFolder: (id: string, title: string) => void;
+  setSelectedFolder: (folder: { id: string; title: string } | null) => Promise<void>;
   fetchFolderChildrens: () => void;
   folderChildrens: FolderChildren[];
   rootParentsIds: string[];
@@ -64,7 +64,7 @@ export const bookmarkStore = createStore<BookmarkState>()(
         folders: [],
         fetchFolders: async () => {
           const bookmarksTree = await getBookmarksTree();
-          
+
           const folders =
             bookmarksTree.map((folder) => {
               return {
@@ -80,12 +80,16 @@ export const bookmarkStore = createStore<BookmarkState>()(
           // set first folder as selected if there's no selected folder
           if (!get().selectedFolder && folders.length && folders[0].children.length) {
             const { id, title } = folders[0].children[0];
-            get().setSelectedFolder(id, title);
+            get().setSelectedFolder({id, title});
           }
         },
         selectedFolder: null,
-        setSelectedFolder: async (id, title) => {
-          set({ selectedFolder: { id, title } });
+        setSelectedFolder: async (folder) => {
+          if (!folder) {
+            set({ selectedFolder: null });
+            return;
+          }
+          set({ selectedFolder: folder });
         },
         fetchFolderChildrens: async () => {
           const [folder] = await getSubTree(bookmarkStore.getState().selectedFolder?.id ?? '');

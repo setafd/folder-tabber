@@ -6,7 +6,7 @@ export const getBookmarksTree = async (): Promise<chrome.bookmarks.BookmarkTreeN
       } else {
         resolve(nodes[0].children ?? []);
       }
-    })
+    });
   });
 };
 
@@ -25,8 +25,7 @@ export const getSubTree = async (id: string): Promise<chrome.bookmarks.BookmarkT
 export const editBookmark = (id: string, changes: chrome.bookmarks.UpdateChanges) =>
   chrome.bookmarks.update(id, changes);
 
-export const createBookmark = (bookmark: chrome.bookmarks.CreateDetails) =>
-  chrome.bookmarks.create(bookmark);
+export const createBookmark = (bookmark: chrome.bookmarks.CreateDetails) => chrome.bookmarks.create(bookmark);
 
 export const deleteBookmark = (id: string) => chrome.bookmarks.remove(id);
 

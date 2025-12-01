@@ -25,8 +25,8 @@ export const Sidebar = () => {
   const { onDeleteFolder } = useDeleteFolder();
 
   const onChangeFolder = useCallback(
-    (folderId: string, title: string) => {
-      setSelectedFolder(folderId, title);
+    (id: string, title: string) => {
+      setSelectedFolder({ id, title });
     },
     [setSelectedFolder],
   );
@@ -66,7 +66,7 @@ export const Sidebar = () => {
                       </button>
                     )}
                   </FolderEditItemWrapper>
-                  <Button variant='icon' className={styles.deleteButton} onClick={() => onDeleteFolder(folder.id)}>
+                  <Button variant="icon" className={styles.deleteButton} onClick={() => onDeleteFolder(folder.id)}>
                     <DeleteSquareIcon className={styles.deleteIcon} size={20} />
                   </Button>
                 </li>
