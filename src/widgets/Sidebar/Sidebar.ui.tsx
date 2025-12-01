@@ -27,7 +27,7 @@ export const Sidebar = () => {
     [setSelectedFolder],
   );
 
-  const OnNumberPressed = useCallback(
+  const onNumberPressed = useCallback(
     (key: (typeof NUMBER_HOTKEYS)[number]) => {
       const index = getIndexByKeyboardNumber(key);
       const folder = folders.flatMap((parent) => parent.children ?? [])[index];
@@ -38,7 +38,7 @@ export const Sidebar = () => {
     [folders, onChangeFolder],
   );
 
-  useHotkeys(NUMBER_HOTKEYS, OnNumberPressed);
+  useHotkeys(NUMBER_HOTKEYS, onNumberPressed);
 
   return (
     <nav aria-label="Navigation" className={styles.navigation}>

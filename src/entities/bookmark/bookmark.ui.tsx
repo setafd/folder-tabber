@@ -4,6 +4,8 @@ import { AddBookmarkIcon, EditIcon, FolderIcon } from '@shared/icons';
 import { getFaviconUrl } from '@shared/lib/getFaviconUrl';
 import { Button } from '@shared/ui/Button';
 
+import { DEFAULT_FOLDER_ID } from './bookmark.const';
+
 import styles from './bookmark.module.scss';
 
 export type BookmarkItemProps = {
@@ -26,9 +28,7 @@ export const BookmarkItem: React.FC<BookmarkItemProps> = ({ id, title, url, onCl
         className={styles.bookmarkLink}
       >
         <img src={getFaviconUrl(url ?? '')} alt="" role="presentation" width={16} height={16} />
-        <span className={styles.bookmarkTitle}>
-          {title}
-        </span>
+        <span className={styles.bookmarkTitle}>{title}</span>
       </Button>
       <Button
         className={styles.iconButton}
@@ -65,7 +65,7 @@ export const BookmarkFolder: React.FC<PropsWithChildren<BookmarkFolderProps>> = 
       <div className={styles.folderItem}>
         <FolderIcon size={18} />
         <h4 className={styles.folderTitle}>{title}</h4>
-        {id !== '-1' && (
+        {id !== DEFAULT_FOLDER_ID && (
           <Button
             className={styles.iconButton}
             variant="icon"

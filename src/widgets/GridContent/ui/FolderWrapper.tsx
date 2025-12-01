@@ -18,7 +18,7 @@ export const FolderWrapper = ({
       <BookmarkFolder
         id={folder.id}
         key={folder.id}
-        title={folder.id}
+        title={folder.title}
         data-index={folder.index}
         className={className}
         onClickCreateButton={() => onClickCreateButton(folder.id)}
@@ -38,7 +38,7 @@ export const FolderWrapper = ({
               key={bookmark.id}
               id={bookmark.id}
               url={bookmark.url}
-              title={bookmark.id}
+              title={bookmark.title}
               onClick={onClickBookmark}
               onEdit={onClickEditButton}
             />
