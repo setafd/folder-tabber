@@ -3,6 +3,7 @@
   display: flex;
   width: 100%;
   gap: 1rem;
+  position: relative;
 }
 
 .sidebar {
@@ -12,4 +13,13 @@
 
 .content {
   flex: 1;
+}
+
+.version {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: -1;
+  font-size: 12px;
+  color: var(--foreground-light-color);
 }

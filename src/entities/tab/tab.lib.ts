@@ -2,8 +2,11 @@ export const openTab = async (url: string, groupTitle: string, inCurrent: boolea
   try {
     let tab: chrome.tabs.Tab;
     if (inCurrent) {
-      tab = (await chrome.tabs.getCurrent())!;
-      window.open(url, '_self');
+      const current = await chrome.tabs.getCurrent();
+      if (!current?.id) return;
+
+      await chrome.tabs.update(current.id, { url });
+      tab = current;
     } else {
       tab = await chrome.tabs.create({ url, active: false });
     }
