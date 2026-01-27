@@ -13,7 +13,7 @@ type Folder = {
   index: number;
 };
 
-interface TopLevelFolder {
+export interface TopLevelFolder {
   id: string;
   title: string;
   children: Folder[];

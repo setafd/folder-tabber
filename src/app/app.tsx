@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import { useStore } from 'zustand';
 import 'react-responsive-modal/styles.css';
+import { useStore } from 'zustand';
 
 import { GridContent } from '@widgets/GridContent';
 import { Sidebar } from '@widgets/Sidebar';

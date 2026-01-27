@@ -12,8 +12,8 @@
     "^@features/(.*)$",
     "^@entities/(.*)$",
     "^@shared/(.*)$",
-    "^[./](?!.*\\.module\\.scss$)",
-    "^[../](?!.*\\.module\\.scss$)",
+    "^\\.\\./(?!.*\\.module\\.scss$)",
+    "^\\./(?!.*\\.module\\.scss$)",
     ".*\\.module\\.scss$"
   ],
   "plugins": ["@trivago/prettier-plugin-sort-imports"],

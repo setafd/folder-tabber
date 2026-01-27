@@ -2,146 +2,160 @@ import { delay } from '@shared/lib/delay';
 
 type BTreeNode = chrome.bookmarks.BookmarkTreeNode;
 
-export function deepFindTreeNode(array: BTreeNode[], predicate: (item: BTreeNode) => boolean): BTreeNode | null {
-  for (const item of array) {
-    if (predicate(item)) {
-      return item;
+type FindResult = {
+  node: BTreeNode;
+  parent: BTreeNode | null;
+  index: number;
+};
+
+function findNode(
+  nodes: BTreeNode[],
+  predicate: (node: BTreeNode) => boolean,
+  parent: BTreeNode | null = null,
+): FindResult | null {
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+
+    if (predicate(node)) {
+      return { node, parent, index: i };
     }
-    if (Array.isArray(item.children)) {
-      const found = deepFindTreeNode(item.children, predicate);
-      if (found) {
-        return found;
-      }
+
+    if (node.children) {
+      const found = findNode(node.children, predicate, node);
+      if (found) return found;
     }
   }
+
   return null;
 }
 
-type MockBookmark = {
-  getTree: (
+async function resolveWithCallback<T>(
+  value: T,
+  callback?: (value: T) => void,
+): Promise<T | void> {
+  await delay();
+  if (callback) {
+    callback(value);
+    return;
+  }
+  return value;
+}
+
+
+type MockBookmarks = {
+  getTree(
     callback?: (result: BTreeNode[]) => void,
-  ) => Promise<BTreeNode[] | void>;
-  getSubTree: (
+  ): Promise<BTreeNode[] | void>;
+
+  getSubTree(
     id: string,
     callback?: (result: BTreeNode[]) => void,
-  ) => Promise<BTreeNode[] | void>;
-  update: (
+  ): Promise<BTreeNode[] | void>;
+
+  create(
+    details: chrome.bookmarks.CreateDetails,
+    callback?: (result: BTreeNode) => void,
+  ): Promise<BTreeNode | void>;
+
+  update(
     id: string,
     changes: chrome.bookmarks.UpdateChanges,
     callback?: (result: BTreeNode) => void,
-  ) => Promise<BTreeNode | void>;
-  create: (
-    createDetails: Required<chrome.bookmarks.CreateDetails>,
-    callback: (result: BTreeNode) => void,
-  ) => Promise<BTreeNode | void>;
-  remove: (id: string, callback: () => void) => Promise<void>;
-  removeTree: (id: string, callback: () => void) => Promise<void>;
+  ): Promise<BTreeNode | void>;
+
+  move(
+    id: string,
+    destination: chrome.bookmarks.MoveDestination,
+    callback?: (result: BTreeNode) => void,
+  ): Promise<BTreeNode | void>;
+
+  remove(id: string, callback?: () => void): Promise<void>;
+  removeTree(id: string, callback?: () => void): Promise<void>;
 };
 
-export const mockBookmark: MockBookmark = {
-  getTree: async (callback) => {
-    await delay();
-    if (callback) {
-      callback(mockData);
-    } else {
-      return mockData;
-    }
+export const mockBookmarks: MockBookmarks = {
+  async getTree(callback) {
+    return resolveWithCallback(mockData, callback);
   },
-  getSubTree: async (id, callback) => {
-    await delay(150);
-    const node = deepFindTreeNode(mockData, (node) => node.id === id);
-    
-    if (!node) {
-      throw new Error(`Node with id ${id} not found`);
-    }
-    
-    const subTree = [node];
-    
-    if (callback) {
-      callback(subTree);
-    } else {
-      return subTree;
-    }
-  },
-  update: async (id, changes, callback) => {
-    await delay();
-    const originalNode = deepFindTreeNode(mockData, (node) => node.id === id);
 
-    if (!originalNode) {
-      throw new Error(`Node with id ${id} not found`);
+  async getSubTree(id, callback) {
+    const found = findNode(mockData, (n) => n.id === id);
+    if (!found) throw new Error(`Node ${id} not found`);
+    return resolveWithCallback([found.node], callback);
+  },
+
+  async create(details, callback) {
+    const parentResult = findNode(mockData, (n) => n.id === details.parentId);
+    if (!parentResult || !parentResult.node.children) {
+      throw new Error(`Parent ${details.parentId} not found`);
     }
 
-    const newNode = {
-      ...originalNode,
-      ...changes,
-    };
-    
-    if (callback) {
-      callback(newNode);
-    } else {
-      return newNode;
-    }
-  },
-  create: async (bookmark, callback) => {
-    await delay(200);
-    const newNode = {
-      ...bookmark,
-      id: `${Date.now()}`,
+    const node: BTreeNode = {
+      id: crypto.randomUUID(),
+      parentId: details.parentId,
+      title: details.title ?? '',
+      url: details.url,
+      index: details.index ?? parentResult.node.children.length,
       dateAdded: Date.now(),
-      syncing: true,
+      syncing: false,
     };
 
-    const parentNode = deepFindTreeNode(mockData, (node) => node.id === bookmark.parentId);
-    if (!parentNode || !Array.isArray(parentNode.children)) {
-      throw new Error(`Parent node with id ${bookmark.parentId} not found`);
-    }
-    parentNode.children.push(newNode);
+    parentResult.node.children.splice(node.index!, 0, node);
+    return resolveWithCallback(node, callback);
+  },
 
-    if (callback) {
-      callback(newNode);
-    } else {
-      return newNode;
-    }
+  async update(id, changes, callback) {
+    const found = findNode(mockData, (n) => n.id === id);
+    if (!found) throw new Error(`Node ${id} not found`);
+
+    Object.assign(found.node, changes);
+    return resolveWithCallback(found.node, callback);
   },
-  remove: async (id, callback) => {
-    await delay();
-    const nodeToDelete = deepFindTreeNode(mockData, (node) => node.id === id);
-    if (!nodeToDelete) {
-      throw new Error(`Node with id ${id} not found`);
+
+  async move(id, destination, callback) {
+    const source = findNode(mockData, (n) => n.id === id);
+    if (!source || !source.parent?.children) {
+      throw new Error(`Node ${id} not found`);
     }
-    const parentNode = deepFindTreeNode(mockData, (node) => node.id === nodeToDelete.parentId);
-    if (!parentNode || !Array.isArray(parentNode.children)) {
-      throw new Error(`Parent node with id ${nodeToDelete.parentId} not found`);
+
+    // remove from old parent
+    source.parent.children.splice(source.index, 1);
+
+    const targetParentId = destination.parentId ?? source.parent.id;
+    const targetParentResult = findNode(mockData, (n) => n.id === targetParentId);
+
+    if (!targetParentResult || !targetParentResult.node.children) {
+      throw new Error(`Target parent ${targetParentId} not found`);
     }
-    const index = parentNode.children.findIndex((node) => node.id === id);
-    if (index === -1) {
-      throw new Error(`Node with id ${id} not found in parent node`);
-    }
-    parentNode.children.splice(index, 1);
-    if (callback) {
-      callback();
-    }
+
+    const newIndex =
+      destination.index ?? targetParentResult.node.children.length;
+
+    source.node.parentId = targetParentId;
+    source.node.index = newIndex;
+
+    targetParentResult.node.children.splice(newIndex, 0, source.node);
+
+    return resolveWithCallback(source.node, callback);
   },
-  removeTree: async (id, callback) => {
+
+  async remove(id, callback) {
+    const found = findNode(mockData, (n) => n.id === id);
+    if (!found || !found.parent?.children) {
+      throw new Error(`Node ${id} not found`);
+    }
+
+    found.parent.children.splice(found.index, 1);
     await delay();
-    const nodeToDelete = deepFindTreeNode(mockData, (node) => node.id === id);
-    if (!nodeToDelete) {
-      throw new Error(`Node with id ${id} not found`);
-    }
-    const parentNode = deepFindTreeNode(mockData, (node) => node.id === nodeToDelete.parentId);
-    if (!parentNode || !Array.isArray(parentNode.children)) {
-      throw new Error(`Parent node with id ${nodeToDelete.parentId} not found`);
-    }
-    const index = parentNode.children.findIndex((node) => node.id === id);
-    if (index === -1) {
-      throw new Error(`Node with id ${id} not found in parent node`);
-    }
-    parentNode.children.splice(index, 1);
-    if (callback) {
-      callback();
-    }
+    callback?.();
+  },
+
+  async removeTree(id, callback) {
+    // для bookmarks removeTree == remove
+    return this.remove(id, callback);
   },
 };
+
 
 const mockData: BTreeNode[] = [
   {

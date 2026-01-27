@@ -5,10 +5,26 @@
   border-right: 1px solid var(--border-color);
   height: 100%;
   padding: 0.5rem;
+  position: relative;
 
   overflow: auto;
 
   gap: 1rem;
+}
+
+.reorderButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+
+  height: 2rem;
+  width: 2rem;
+
+  &[data-active='true'] {
+    filter: invert(1);
+
+    background-color: var(--background-color);
+  }
 }
 
 .section {
@@ -30,7 +46,16 @@
 }
 
 .folderWrapper {
+  display: flex;
   position: relative;
+  align-items: center;
+  cursor: grab;
+
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .folderItem {

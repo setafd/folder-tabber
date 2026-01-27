@@ -89,8 +89,8 @@ export default tseslint.config(
             },
             {
               pattern: './*.module.scss',
-              group: 'sibling',
-              position: 'after',
+              group: 'index',
+              position: 'before',
             },
           ],
           pathGroupsExcludedImportTypes: ['builtin'],

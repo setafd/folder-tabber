@@ -1,10 +1,10 @@
-import { mockBookmark } from './bookmark.mock';
+import { mockBookmarks } from './bookmark.mock';
 import { mockRuntime } from './runtime.mock';
 import { mockTabs } from './tab.mock';
 import { mockTabGroups } from './tabGroups.mock';
 
 export const mockChrome = {
-  bookmarks: mockBookmark,
+  bookmarks: mockBookmarks,
   tabs: mockTabs,
   tabGroups: mockTabGroups,
   runtime: mockRuntime,
