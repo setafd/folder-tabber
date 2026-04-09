@@ -93,6 +93,7 @@ export const BookmarkUpdateForm = (props: FormProps) => {
         <Button
           style={{ justifySelf: 'flex-start' }}
           variant="danger"
+          type="button"
           onClick={() => {
             if (option === 'bookmark') {
               onDeleteBookmark(bookmarkId).then(onClose);
