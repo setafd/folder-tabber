@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -28,6 +28,8 @@ const SidebarGroupRaw = ({
     disabled: !isReorderMode,
   });
 
+  const itemsIds = useMemo(() => parent.children.map((folder) => folder.id), [parent.children]);
+
   return (
     <section aria-labelledby={`sidebar-section-${parent.id}`} id={parent.id} className={styles.section}>
       <h2 id={`sidebar-section-${parent.id}`} className={styles.sectionTitle}>
@@ -35,7 +37,7 @@ const SidebarGroupRaw = ({
       </h2>
       <SortableContext
         id={parent.id}
-        items={parent.children.map((folder) => folder.id)}
+        items={itemsIds}
         strategy={verticalListSortingStrategy}
       >
         <ul ref={setNodeRef} className={styles.folderList}>

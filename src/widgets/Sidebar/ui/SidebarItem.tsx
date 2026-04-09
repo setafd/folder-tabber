@@ -32,24 +32,20 @@ const SidebarItemRaw = ({
   };
 
   return (
-    <li ref={setNodeRef} style={style} className={styles.folderWrapper}>
-      {isReorderMode && (
-        <span className={styles.dragHandle} {...attributes} {...listeners} onClick={(e) => e.stopPropagation()}>
-          ⋮
-        </span>
-      )}
+    <li ref={setNodeRef} {...attributes} {...listeners} style={style} className={styles.folderWrapper}>
       <FolderEditItemWrapper id={folder.id} title={folder.title}>
         {(showInput) => (
           <button
             onClick={() => onChangeFolder(folder.id, folder.title)}
             onDoubleClick={showInput}
-            className={`${styles.folderItem} ${isSelected ? styles.active : ''}`}
+            data-active={isSelected}
+            className={styles.folderItem}
           >
             {folder.title}
           </button>
         )}
       </FolderEditItemWrapper>
-      <FolderDeleteButton id={folder.id} />
+      <FolderDeleteButton id={folder.id} className={styles.deleteButton} />
     </li>
   );
 };

@@ -9,7 +9,7 @@ import { useDeleteFolderState } from './folder-delete.model';
 
 import styles from './folder-delete.module.scss';
 
-export const FolderDeleteButton = ({ id }: { id: string }) => {
+export const FolderDeleteButton = ({ id, className }: { id: string, className?: string }) => {
   const openConfirmModal = useDeleteFolderState((state) => state.toggleOpenConfirm);
 
   const onDeleteFolderWrapper = async (id: string) => {
@@ -25,7 +25,7 @@ export const FolderDeleteButton = ({ id }: { id: string }) => {
   };
 
   return (
-    <Button variant="icon" className={styles.deleteButton} onClick={() => onDeleteFolderWrapper(id)}>
+    <Button variant="icon" className={`${styles.deleteButton} ${className}`} onClick={() => onDeleteFolderWrapper(id)}>
       <DeleteSquareIcon className={styles.deleteIcon} size={20} />
     </Button>
   );

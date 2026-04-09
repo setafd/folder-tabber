@@ -36,7 +36,7 @@
 
 .sectionTitle {
   font-size: 0.875rem;
-  padding-inline: 0.25rem;
+  padding: 0.25rem;
 }
 
 .folderList {
@@ -51,10 +51,20 @@
   align-items: center;
   cursor: grab;
 
+  height: 2rem;
+
   user-select: none;
 
   &:active {
     cursor: grabbing;
+  }
+
+  .deleteButton {
+    display: none;
+  }
+
+  & > .folderItem ~ .deleteButton {
+    display: block;
   }
 }
 
@@ -75,7 +85,7 @@
     filter: invert(0.1);
   }
 
-  &.active {
+  &[data-active='true'] {
     filter: invert(1);
   }
 }
