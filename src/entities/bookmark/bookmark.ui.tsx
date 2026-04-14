@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, memo } from 'react';
 
 import { AddBookmarkIcon, EditIcon, FolderIcon } from '@shared/icons';
-import { getFaviconUrl } from '@shared/lib/getFaviconUrl';
+import { getFaviconUrl } from '@shared/lib/helpers';
 import { Button } from '@shared/ui/Button';
 
 import { DEFAULT_FOLDER_ID } from './bookmark.const';

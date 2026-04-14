@@ -8,7 +8,7 @@ import { FolderDeleteConfirmModal } from '@features/folder/delete';
 
 import { bookmarkStore } from '@entities/bookmark';
 
-import { useHotkeys } from '@shared/lib/react';
+import { useHotkeys } from '@shared/lib/hooks';
 
 import { NUMBER_HOTKEYS } from '../Sidebar.const';
 import { getIndexByKeyboardNumber, useDrag } from '../Sidebar.lib';

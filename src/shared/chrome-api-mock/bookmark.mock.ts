@@ -1,4 +1,4 @@
-import { delay } from '@shared/lib/delay';
+import { delay } from '@shared/lib/helpers';
 
 type BTreeNode = chrome.bookmarks.BookmarkTreeNode;
 

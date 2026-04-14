@@ -19,7 +19,7 @@ export function moveBetweenContainers(
   sourceId: string,
   targetId: string,
   overId: string,
-): TopLevelFolder[] {
+) {
   const source = folders.find((f) => f.id === sourceId);
   const target = folders.find((f) => f.id === targetId);
   if (!source || !target) return folders;

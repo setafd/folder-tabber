@@ -1,4 +1,4 @@
-import { delay } from 'shared/lib/delay';
+import { delay } from 'shared/lib/helpers';
 
 type MockTabs = {
   getCurrent: (callback?: (tab?: chrome.tabs.Tab) => void) => Promise<chrome.tabs.Tab | undefined | void>;

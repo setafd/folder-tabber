@@ -10,4 +10,10 @@ export default defineConfig([
       'fsd/insignificant-slice': 'off',
     },
   },
+  {
+    files: ['./src/shared/declarations/**'],
+    rules: {
+      'fsd/public-api': 'off',
+    },
+  },
 ]);
