@@ -44,7 +44,7 @@ export const BookmarkItem: React.FC<BookmarkItemProps> = ({ id, title, url, onCl
   );
 };
 
-export type BookmarkFolderProps = {
+type BookmarkFolderProps = {
   id: string;
   title: string;
   className?: string;

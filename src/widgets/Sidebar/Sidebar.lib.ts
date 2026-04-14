@@ -13,7 +13,7 @@ export const getIndexByKeyboardNumber = (number: (typeof NUMBER_HOTKEYS)[number]
   return Number(number) - 1;
 };
 
-export function moveBetweenContainers(
+function moveBetweenContainers(
   folders: TopLevelFolder[],
   activeId: string,
   sourceId: string,

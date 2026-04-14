@@ -47,7 +47,7 @@ export const BookmarkUpdateModal = () => {
   );
 };
 
-export const BookmarkUpdateForm = (props: FormProps) => {
+const BookmarkUpdateForm = (props: FormProps) => {
   const { id: bookmarkId, title, url = '', option, onClose } = props;
 
   const { onDeleteBookmark } = useDeleteBookmark();

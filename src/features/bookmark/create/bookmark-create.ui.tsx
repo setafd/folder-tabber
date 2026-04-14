@@ -37,7 +37,7 @@ export const BookmarkCreateFormModal = () => {
   );
 };
 
-export const BookmarkCreateForm = ({
+const BookmarkCreateForm = ({
   parentId,
   option,
   onClose,
