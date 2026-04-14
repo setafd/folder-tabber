@@ -15,17 +15,14 @@ import styles from './Sidebar.module.scss';
 const SidebarGroupRaw = ({
   parent,
   onChangeFolder,
-  isReorderMode,
 }: {
   parent: TopLevelFolder;
   onChangeFolder: (id: string, title: string) => void;
-  isReorderMode: boolean;
 }) => {
   const selectedFolderId = useStore(bookmarkStore, (state) => state.selectedFolder?.id);
 
   const { setNodeRef } = useDroppable({
     id: parent.id,
-    disabled: !isReorderMode,
   });
 
   const itemsIds = useMemo(() => parent.children.map((folder) => folder.id), [parent.children]);
@@ -44,7 +41,6 @@ const SidebarGroupRaw = ({
           {parent.children.map((folder) => (
             <SidebarItem
               key={folder.id}
-              isReorderMode={isReorderMode}
               folder={folder}
               isSelected={folder.id === selectedFolderId}
               onChangeFolder={onChangeFolder}

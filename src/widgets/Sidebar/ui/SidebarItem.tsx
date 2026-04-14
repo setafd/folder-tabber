@@ -14,16 +14,13 @@ const SidebarItemRaw = ({
   folder,
   onChangeFolder,
   isSelected,
-  isReorderMode,
 }: {
   folder: TopLevelFolder['children'][number];
   onChangeFolder: (id: string, title: string) => void;
   isSelected: boolean;
-  isReorderMode: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: folder.id,
-    disabled: !isReorderMode,
   });
 
   const style = {
@@ -53,8 +50,5 @@ const SidebarItemRaw = ({
 export const SidebarItem = memo(
   SidebarItemRaw,
   (prev, next) =>
-    prev.folder.id === next.folder.id &&
-    prev.folder.title === next.folder.title &&
-    prev.isSelected === next.isSelected &&
-    prev.isReorderMode === next.isReorderMode,
+    prev.folder.id === next.folder.id && prev.folder.title === next.folder.title && prev.isSelected === next.isSelected,
 );

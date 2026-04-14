@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 
-import { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
+import { DragEndEvent, DragOverEvent, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
 import { TopLevelFolder, bookmarkStore, moveBookmark } from '@entities/bookmark';
 
@@ -51,6 +51,12 @@ export function moveBetweenContainers(
 export const useDrag = ({ folders }: { folders: TopLevelFolder[] }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draftFolders, setDraftFolders] = useState<TopLevelFolder[] | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 10 },
+    }),
+  );
 
   const isLastPositionBelowRef = useRef<boolean | null>(null);
   const originalParentRef = useRef<string | null>(null);
@@ -180,6 +186,7 @@ export const useDrag = ({ folders }: { folders: TopLevelFolder[] }) => {
   return {
     activeId,
     renderedFolders,
+    sensors,
     dndContextProps: {
       onDragStart,
       onDragOver,

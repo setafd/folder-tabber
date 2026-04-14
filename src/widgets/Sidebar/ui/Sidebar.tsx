@@ -8,13 +8,10 @@ import { FolderDeleteConfirmModal } from '@features/folder/delete';
 
 import { bookmarkStore } from '@entities/bookmark';
 
-import { OrderIcon } from '@shared/icons';
 import { useHotkeys } from '@shared/lib/react';
-import { Button } from '@shared/ui/Button';
 
 import { NUMBER_HOTKEYS } from '../Sidebar.const';
 import { getIndexByKeyboardNumber, useDrag } from '../Sidebar.lib';
-import { useSidebarState } from '../Sidebar.model';
 
 import { SidebarGroup } from './SidebarGroup';
 
@@ -27,10 +24,7 @@ export const Sidebar = () => {
   );
   const setSelectedFolder = useStore(bookmarkStore, (state) => state.setSelectedFolder);
 
-  const isReorderMode = useStore(useSidebarState, (state) => state.isReorderMode);
-  const toggleReorderMode = useStore(useSidebarState, (state) => state.toggleReorderMode);
-
-  const { activeId, renderedFolders, dndContextProps } = useDrag({ folders });
+  const { activeId, renderedFolders, dndContextProps, sensors } = useDrag({ folders });
 
   const onChangeFolder = useCallback(
     (id: string, title: string) => {
@@ -61,6 +55,7 @@ export const Sidebar = () => {
   return (
     <DndContext
       collisionDetection={closestCorners}
+      sensors={sensors}
       measuring={{
         droppable: {
           strategy: MeasuringStrategy.Always,
@@ -70,11 +65,8 @@ export const Sidebar = () => {
     >
       <nav aria-label="Navigation" className={styles.navigation}>
         {renderedFolders.map((parent) => (
-          <SidebarGroup key={parent.id} isReorderMode={isReorderMode} parent={parent} onChangeFolder={onChangeFolder} />
+          <SidebarGroup key={parent.id} parent={parent} onChangeFolder={onChangeFolder} />
         ))}
-        <Button data-active={isReorderMode} variant="icon" className={styles.reorderButton} onClick={toggleReorderMode}>
-          <OrderIcon size={24} />
-        </Button>
         <FolderDeleteConfirmModal />
       </nav>
       <DragOverlay dropAnimation={null}>
