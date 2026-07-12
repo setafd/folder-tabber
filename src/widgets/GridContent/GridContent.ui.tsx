@@ -1,49 +1,31 @@
-import { memo, useCallback, useLayoutEffect, useRef } from 'react';
-
-import Packery from 'packery';
+import { memo, useCallback } from 'react';
 
 import { BookmarkCreateFormModal, useCreateBookmarkState } from '@features/bookmark/create';
 import { BookmarkUpdateModal, useEditBookmarkState } from '@features/bookmark/edit';
 
-import { type BookmarkItemProps, DEFAULT_FOLDER_ID } from '@entities/bookmark';
+import { type BookmarkItemProps } from '@entities/bookmark';
 import { openTab } from '@entities/tab';
 
+import { GRID_CARD_WIDTH, GRID_GAP } from '@shared/config';
 import { PlusIcon } from '@shared/icons';
 import { Button } from '@shared/ui/Button';
 
 import { useBookmarks } from './GridContent.lib';
-import { EmptyContent, FolderWrapper } from './ui';
+import { useMasonryLayout } from './GridContent.masonry';
+import { EmptyContent, GridFolder, MasonryItem } from './ui';
+
+import styles from './GridContent.module.scss';
 
 const GridContent: React.FC = () => {
   const { folders, isEmpty, title, folderId } = useBookmarks();
 
+  const { containerRef, containerHeight, positions, registerItem } = useMasonryLayout(folders, {
+    cardWidth: GRID_CARD_WIDTH,
+    gap: GRID_GAP,
+  });
+
   const { setOpen: openCreateModal } = useCreateBookmarkState();
   const { setOpen: openEditModal } = useEditBookmarkState();
-
-  const gridRef = useRef<HTMLDivElement>(null);
-  const packeryRef = useRef<typeof Packery | null>(null);
-
-  useLayoutEffect(() => {
-    if (isEmpty || !gridRef.current) return;
-
-    const grid = gridRef.current;
-
-    if (!packeryRef.current) {
-      packeryRef.current = new Packery(grid, {
-        itemSelector: '.element-item',
-        gutter: 8,
-        columnWidth: 250,
-      });
-    } else {
-      packeryRef.current.reloadItems();
-      packeryRef.current.layout();
-    }
-
-    return () => {
-      packeryRef.current?.destroy();
-      packeryRef.current = null;
-    };
-  }, [folders, isEmpty]);
 
   const onClickBookmark = useCallback<Required<BookmarkItemProps>['onClick']>(
     (event) => {
@@ -59,11 +41,8 @@ const GridContent: React.FC = () => {
 
   const onCreateBookmark = useCallback(
     (parentId?: string, option: 'bookmark' | 'folder' = 'bookmark') => {
-      let parsedParentId = parentId;
-      if (!parsedParentId || parsedParentId === DEFAULT_FOLDER_ID) {
-        parsedParentId = folderId!;
-      }
-      openCreateModal(parsedParentId, option);
+      // The root card already carries the real selected-folder id, so parentId is used as-is.
+      openCreateModal(parentId ?? folderId!, option);
     },
     [folderId, openCreateModal],
   );
@@ -79,21 +58,30 @@ const GridContent: React.FC = () => {
 
   return (
     <>
-      <div ref={gridRef} style={{ padding: '1rem' }}>
-        <FolderWrapper
-          folders={folders}
-          className="element-item"
-          onClickBookmark={onClickBookmark}
-          onClickCreateButton={onCreateBookmark}
-          onClickEditButton={onEditBookmark}
-        />
-        <Button
-          style={{ position: 'fixed', right: 16, bottom: 16, padding: '0.5rem', borderRadius: 100, height: '2.5rem' }}
-          onClick={() => onCreateBookmark(folderId!, 'folder')}
-        >
-          <PlusIcon size={24} color="white" />
-        </Button>
+      <div className={styles.gridWrapper}>
+        <div className={styles.grid} ref={containerRef} style={{ height: containerHeight }}>
+          {folders.map((folder) => (
+            <MasonryItem
+              key={folder.id}
+              id={folder.id}
+              width={GRID_CARD_WIDTH}
+              position={positions.get(folder.id)}
+              registerItem={registerItem}
+            >
+              <GridFolder
+                folder={folder}
+                isRoot={folder.id === folderId}
+                onClickBookmark={onClickBookmark}
+                onClickCreateButton={onCreateBookmark}
+                onClickEditButton={onEditBookmark}
+              />
+            </MasonryItem>
+          ))}
+        </div>
       </div>
+      <Button className={styles.addButton} onClick={() => onCreateBookmark(folderId!, 'folder')}>
+        <PlusIcon size={24} color="white" />
+      </Button>
       <BookmarkCreateFormModal />
       <BookmarkUpdateModal />
     </>

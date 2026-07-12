@@ -1,2 +1,3 @@
 export * from './EmptyContent';
-export * from './FolderWrapper';
+export * from './GridFolder';
+export * from './MasonryItem';

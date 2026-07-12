@@ -8,6 +8,8 @@ import { FolderCreateItem } from '@features/folder/create';
 
 import { TopLevelFolder, bookmarkStore } from '@entities/bookmark';
 
+import { toContainerId } from '@shared/lib/dnd';
+
 import { SidebarItem } from './SidebarItem';
 
 import styles from './Sidebar.module.scss';
@@ -22,7 +24,8 @@ const SidebarGroupRaw = ({
   const selectedFolderId = useStore(bookmarkStore, (state) => state.selectedFolder?.id);
 
   const { setNodeRef } = useDroppable({
-    id: parent.id,
+    id: toContainerId(parent.id),
+    data: { type: 'container', parentId: parent.id },
   });
 
   const itemsIds = useMemo(() => parent.children.map((folder) => folder.id), [parent.children]);
@@ -42,6 +45,7 @@ const SidebarGroupRaw = ({
             <SidebarItem
               key={folder.id}
               folder={folder}
+              parentId={parent.id}
               isSelected={folder.id === selectedFolderId}
               onChangeFolder={onChangeFolder}
             />

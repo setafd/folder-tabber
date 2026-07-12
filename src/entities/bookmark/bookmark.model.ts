@@ -5,7 +5,6 @@ import { syncTabs } from 'zustand-sync-tabs';
 import { IS_DEV } from '@shared/config';
 
 import { getBookmarksTree, getSubTree } from './bookmark.api';
-import { DEFAULT_FOLDER_ID } from './bookmark.const';
 
 type Folder = {
   id: string;
@@ -31,14 +30,18 @@ interface BookmarkState {
   setSelectedFolder: (folder: { id: string; title: string } | null) => Promise<void>;
   fetchFolderChildrens: () => void;
   folderChildrens: FolderChildren[];
+  folderChildrenRaw: FolderChildren[];
   rootParentsIds: string[];
 }
 
-type PersistedBookmarkState = Pick<BookmarkState, 'folders' | 'selectedFolder' | 'folderChildrens'>;
+type PersistedBookmarkState = Pick<
+  BookmarkState,
+  'folders' | 'selectedFolder' | 'folderChildrens' | 'folderChildrenRaw'
+>;
 
 const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
   name: 'bookmark-storage',
-  version: 1,
+  version: 2,
   storage: IS_DEV
     ? createJSONStorage(() => localStorage)
     : createJSONStorage(() => ({
@@ -54,6 +57,12 @@ const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
     folders: state.folders,
     selectedFolder: state.selectedFolder,
     folderChildrens: state.folderChildrens,
+    folderChildrenRaw: state.folderChildrenRaw,
+  }),
+  migrate: (persisted) => ({
+    ...(persisted as PersistedBookmarkState),
+    folderChildrens: [],
+    folderChildrenRaw: [],
   }),
 };
 
@@ -77,7 +86,6 @@ export const bookmarkStore = createStore<BookmarkState>()(
 
           set({ folders });
 
-          // set first folder as selected if there's no selected folder
           if (!get().selectedFolder && folders.length && folders[0].children.length) {
             const { id, title } = folders[0].children[0];
             get().setSelectedFolder({id, title});
@@ -95,7 +103,15 @@ export const bookmarkStore = createStore<BookmarkState>()(
           const [folder] = await getSubTree(bookmarkStore.getState().selectedFolder?.id ?? '');
 
           const children = folder.children || [];
-          const mappedSubTree = children?.reduce<FolderChildren[]>(
+
+          const rootCard: FolderChildren = {
+            id: folder.id,
+            title: 'Default',
+            children: [],
+            syncing: false,
+          };
+
+          const mappedSubTree = children.reduce<FolderChildren[]>(
             (acc, child) => {
               const isFolder = !!child.children;
 
@@ -107,12 +123,13 @@ export const bookmarkStore = createStore<BookmarkState>()(
 
               return acc;
             },
-            [{ id: DEFAULT_FOLDER_ID, children: [], syncing: false, title: 'Default' }],
+            [rootCard],
           );
 
-          set({ folderChildrens: mappedSubTree });
+          set({ folderChildrens: mappedSubTree, folderChildrenRaw: children });
         },
         folderChildrens: [],
+        folderChildrenRaw: [],
         rootParentsIds: [],
       }),
       { name: 'bookmark-channel' },

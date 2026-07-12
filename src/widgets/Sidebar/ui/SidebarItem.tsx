@@ -12,15 +12,18 @@ import styles from './Sidebar.module.scss';
 
 const SidebarItemRaw = ({
   folder,
+  parentId,
   onChangeFolder,
   isSelected,
 }: {
   folder: TopLevelFolder['children'][number];
+  parentId: string;
   onChangeFolder: (id: string, title: string) => void;
   isSelected: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: folder.id,
+    data: { type: 'item', parentId, isFolder: true },
   });
 
   const style = {

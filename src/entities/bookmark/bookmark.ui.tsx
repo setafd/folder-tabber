@@ -4,8 +4,6 @@ import { AddBookmarkIcon, EditIcon, FolderIcon } from '@shared/icons';
 import { getFaviconUrl } from '@shared/lib/helpers';
 import { Button } from '@shared/ui/Button';
 
-import { DEFAULT_FOLDER_ID } from './bookmark.const';
-
 import styles from './bookmark.module.scss';
 
 export type BookmarkItemProps = {
@@ -47,7 +45,8 @@ export const BookmarkItem: React.FC<BookmarkItemProps> = ({ id, title, url, onCl
 type BookmarkFolderProps = {
   id: string;
   title: string;
-  className?: string;
+  isRoot?: boolean;
+  dragHandle?: React.ReactNode;
   onClickCreateButton: () => void;
   onEdit: (type: 'folder', id: string, title: string) => void;
 };
@@ -55,17 +54,18 @@ type BookmarkFolderProps = {
 export const BookmarkFolder: React.FC<PropsWithChildren<BookmarkFolderProps>> = memo(function BookmarkFolder({
   id,
   title,
-  className,
+  isRoot,
+  dragHandle,
   children,
   onClickCreateButton,
   onEdit,
 }) {
   return (
-    <div className={`${className} ${styles.folderContainer}`}>
+    <div className={styles.folderContainer}>
       <div className={styles.folderItem}>
-        <FolderIcon size={18} />
+        {dragHandle ?? <FolderIcon size={18} />}
         <h4 className={styles.folderTitle}>{title}</h4>
-        {id !== DEFAULT_FOLDER_ID && (
+        {!isRoot && (
           <Button
             className={styles.iconButton}
             variant="icon"

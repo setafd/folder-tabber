@@ -13,6 +13,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.dnd-overlay {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  font-size: 0.875rem;
+  cursor: grabbing;
+}
+
 button,
 input,
 select {

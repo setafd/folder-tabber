@@ -8,7 +8,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'vite.config.ts'] },
+  { ignores: ['dist', 'vite.config.ts', 'vitest.config.ts'] },
   {
     extends: [
       js.configs.recommended,

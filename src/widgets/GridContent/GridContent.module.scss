@@ -1,0 +1,21 @@
+// Padding lives here, separate from `.grid`, so the masonry hook's width/column math (which
+// reads `.grid`'s own box) never has to account for it — `.grid` fills exactly the content
+// box this wrapper leaves available.
+.gridWrapper {
+  padding: 1rem;
+}
+
+// Positioning root for `MasonryItem`s: they place themselves via `top`/`left` relative to
+// this box. Height is set inline by the layout hook, since children are taken out of flow.
+.grid {
+  position: relative;
+}
+
+.addButton {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: 100px;
+}
