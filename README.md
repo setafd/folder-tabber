@@ -3,6 +3,10 @@
 A Chromium extension that replaces the New Tab page with a folder-based view of
 your existing bookmarks. Built with React, TypeScript and Vite, using Manifest V3.
 
+![FolderTabber with sidebar navigation, nested folders and adaptive bookmark cards](.github/assets/folder-tabber.png)
+
+An example workspace with demonstration bookmarks.
+
 ## Features
 
 - Browse bookmark folders through the sidebar and breadcrumbs.
