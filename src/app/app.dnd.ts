@@ -11,9 +11,8 @@ import {
 } from '@dnd-kit/core';
 import { useStore } from 'zustand';
 
-import { type FolderChildren, bookmarkStore, isFolder, resolveMoveIndex } from '@entities/bookmark';
-
-import { type DropData, type DropIntent } from '@shared/lib/dnd';
+import { type FolderChildren, bookmarkStore, isFolder, resolveMoveIndex } from '@/bookmarks';
+import { type DropData, type DropIntent } from '@/lib/dnd';
 
 type Rect = { top: number; left: number; width: number; height: number };
 export function dropIntent(data: DropData, point: { x: number; y: number }, rect: Rect): DropIntent {
@@ -136,7 +135,7 @@ export const useAppDnd = () => {
         isBelow: intent === 'after',
       });
       if (!resolved) return;
-      index = resolved.apiIndex;
+      index = resolved.insertionIndex;
     }
     await bookmarkStore.getState().moveNode(id, parentId, index);
   };

@@ -2,9 +2,8 @@ import { type CollisionDetection, type DragEndEvent, type DragStartEvent } from 
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type FolderChildren, bookmarkStore } from '@entities/bookmark';
-
-import { type DropData } from '@shared/lib/dnd';
+import { type FolderChildren, bookmarkStore } from '@/bookmarks';
+import { type DropData } from '@/lib/dnd';
 
 import { dropIntent, useAppDnd } from './app.dnd';
 
@@ -12,20 +11,17 @@ const bm = (id: string): FolderChildren => ({
   id,
   title: id,
   url: 'https://example.com',
-  syncing: false,
   parentId: 'selected',
 });
 const tree: FolderChildren[] = [
   {
     id: '1',
     title: 'Root',
-    syncing: false,
     parentId: '0',
     children: [
       {
         id: 'selected',
         title: 'Selected',
-        syncing: false,
         parentId: '1',
         children: [
           bm('A'),
@@ -35,12 +31,11 @@ const tree: FolderChildren[] = [
             id: 'F',
             title: 'Folder',
             parentId: 'selected',
-            syncing: false,
-            children: [{ id: 'Nested', title: 'Nested', syncing: false, parentId: 'F', children: [] }],
+            children: [{ id: 'Nested', title: 'Nested', parentId: 'F', children: [] }],
           },
         ],
       },
-      { id: 'other', title: 'Other', parentId: '1', syncing: false, children: [] },
+      { id: 'other', title: 'Other', parentId: '1', children: [] },
     ],
   },
 ];

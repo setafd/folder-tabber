@@ -8,7 +8,18 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'vite.config.ts', 'vitest.config.ts'] },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/platform/**'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'chrome', message: 'Use the platform adapter.' },
+        { name: 'browser', message: 'Use the platform adapter.' },
+      ],
+    },
+  },
+  { ignores: ['build', 'build-firefox', 'artifacts', 'vite.config.ts', 'vitest.config.ts'] },
   {
     extends: [
       js.configs.recommended,
@@ -52,46 +63,9 @@ export default tseslint.config(
         'error',
         {
           pathGroups: [
-            {
-              pattern: 'react',
-              group: 'builtin',
-              position: 'before',
-            },
-            {
-              pattern: '@app/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: '@pages/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: '@widgets/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: '@features/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: '@entities/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: '@shared/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: './*.module.scss',
-              group: 'index',
-              position: 'before',
-            },
+            { pattern: 'react', group: 'builtin', position: 'before' },
+            { pattern: '@/**', group: 'internal', position: 'before' },
+            { pattern: './*.module.scss', group: 'index', position: 'before' },
           ],
           pathGroupsExcludedImportTypes: ['builtin'],
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],

@@ -1,15 +1,21 @@
-name: Build CRX
+name: Build extensions
 
 on:
   push:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build ${{ matrix.browser }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
 
     steps:
       - name: Checkout code
@@ -25,13 +31,31 @@ jobs:
         with:
           cache: true
 
+      - name: Check release version
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const version = process.env.GITHUB_REF_NAME.slice(1);
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const manifest = JSON.parse(fs.readFileSync('public/manifest.json', 'utf8'));
+          if (pkg.version !== version || manifest.version !== version) {
+            throw new Error('Tag, package.json and manifest.json versions must match');
+          }
+          NODE
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build extension
-        run: pnpm run build
+      - name: Build Chromium extension
+        if: matrix.browser == 'chromium'
+        run: pnpm build
+
+      - name: Build Firefox extension
+        if: matrix.browser == 'firefox'
+        run: pnpm build:firefox
 
       - name: Write private key
+        if: matrix.browser == 'chromium'
         env:
           CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
         run: |
@@ -44,6 +68,7 @@ jobs:
           fi
 
       - name: Pack CRX with Chrome
+        if: matrix.browser == 'chromium'
         run: |
           CHROME=$(command -v google-chrome-stable || \
                    command -v google-chrome || \
@@ -57,31 +82,79 @@ jobs:
             --pack-extension="$GITHUB_WORKSPACE/build" \
             --pack-extension-key="$RUNNER_TEMP/key.pem"
           VERSION="${GITHUB_REF_NAME#v}"
-          mv build.crx "folder-tabber-${VERSION}.crx"
+          mkdir -p release
+          mv build.crx "release/folder-tabber-${VERSION}.crx"
 
       - name: Remove private key
-        if: always()
+        if: always() && matrix.browser == 'chromium'
         run: rm -f "$RUNNER_TEMP/key.pem"
 
-      - name: Zip unpacked extension
+      - name: Package Chromium ZIP
+        if: matrix.browser == 'chromium'
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          (cd build && zip -r "../folder-tabber-${VERSION}.zip" .)
+          mkdir -p release
+          (cd build && zip -r "../release/folder-tabber-${VERSION}.zip" .)
+
+      - name: Package Firefox review sources
+        if: matrix.browser == 'firefox'
+        run: node .github/scripts/package-firefox-source.mjs "$RUNNER_TEMP/firefox-sources.zip"
+
+      - name: Sign Firefox extension with Mozilla
+        if: matrix.browser == 'firefox'
+        timeout-minutes: 35
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+        run: |
+          : "${WEB_EXT_API_KEY:?Missing WEB_EXT_API_KEY secret}"
+          : "${WEB_EXT_API_SECRET:?Missing WEB_EXT_API_SECRET secret}"
+          pnpm dlx web-ext@10.8.0 sign \
+            --channel unlisted \
+            --source-dir build-firefox \
+            --upload-source-code "$RUNNER_TEMP/firefox-sources.zip" \
+            --artifacts-dir "$RUNNER_TEMP/firefox-signed" \
+            --timeout 900000 \
+            --approval-timeout 900000 \
+            --no-config-discovery
+          shopt -s nullglob
+          SIGNED_XPIS=("$RUNNER_TEMP/firefox-signed/"*.xpi)
+          if [ "${#SIGNED_XPIS[@]}" -ne 1 ]; then
+            echo "Expected exactly one signed Firefox XPI from Mozilla"
+            exit 1
+          fi
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release
+          cp "${SIGNED_XPIS[0]}" "release/folder-tabber-firefox-${VERSION}.xpi"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: folder-tabber
-          path: |
-            folder-tabber-*.crx
-            folder-tabber-*.zip
+          name: folder-tabber-${{ matrix.browser }}
+          path: release/*
           if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: folder-tabber-*
+          path: release
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            folder-tabber-*.crx
-            folder-tabber-*.zip
+            release/*.crx
+            release/*.zip
+            release/*.xpi
           fail_on_unmatched_files: true
           generate_release_notes: true

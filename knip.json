@@ -1,7 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "tags": ["-lintignore"],
-  "ignoreBinaries": ["dot"],
-  "ignoreFiles": ["steiger.config.js"],
-  "ignoreDependencies": ["@feature-sliced/steiger-plugin"]
+  "ignoreBinaries": ["dot"]
 }

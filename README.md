@@ -1,7 +1,7 @@
 # FolderTabber
 
-A Chromium extension that replaces the New Tab page with a folder-based view of
-your existing bookmarks. Built with React, TypeScript and Vite, using Manifest V3.
+A browser extension for Chromium and Firefox that replaces the New Tab page with
+a folder-based view of your existing bookmarks. Built with React, TypeScript and Vite, using Manifest V3.
 
 ![FolderTabber with sidebar navigation, nested folders and adaptive bookmark cards](.github/assets/folder-tabber.png)
 
@@ -18,15 +18,15 @@ An example workspace with demonstration bookmarks.
 - Use a collapsible sidebar on narrow windows.
 
 Changes are written directly to the browser's bookmarks. The selected folder is
-saved in `chrome.storage.local`; bookmark data is loaded from Chrome when the
-extension starts.
+saved in the browser's local extension storage; bookmark data is loaded from the
+browser when the extension starts.
 
 ## Install a release
 
-Requires a Chromium-based browser with the `bookmarks`, `tabGroups` and other
-extension APIs declared in [the manifest](public/manifest.json).
+Releases include CRX and ZIP builds for Chromium, plus a Mozilla-signed XPI for Firefox
+140+ on desktop. The steps below describe Chromium installation.
 
-1. Download the ZIP from [Releases](https://github.com/setafd/folder-tabber/releases)
+1. Download `folder-tabber-<version>.zip` from [Releases](https://github.com/setafd/folder-tabber/releases)
    and extract it to a folder you will keep on disk.
 2. Open `chrome://extensions/` and enable **Developer mode**.
 3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
@@ -52,4 +52,27 @@ Load the generated `build/` directory through **Load unpacked** on
 open a new tab to use the updated build.
 
 Installing dependencies runs `prepare`, which configures Git to use `.githooks/`.
-The pre-commit hook runs ESLint and Steiger and blocks the commit if either fails.
+The pre-commit hook runs ESLint and the test suite and blocks the commit if either fails.
+
+### Firefox
+
+Download `folder-tabber-firefox-<version>.xpi` from Releases, then open
+`about:addons` and use **Install Add-on From File** in the settings menu.
+
+To build and try the extension locally:
+
+```sh
+pnpm build:firefox
+```
+
+The Firefox build is written to `build-firefox/`, separately from the Chromium
+build in `build/`. It uses a Firefox-specific manifest and supports tab groups.
+
+To try it locally, open `about:debugging#/runtime/this-firefox`, choose
+**Load Temporary Add-on**, and select `build-firefox/manifest.json`. Open a new tab
+and accept the new-tab override if Firefox prompts you. Temporary add-ons are
+removed when Firefox restarts. Permanent installation in Firefox Release requires
+[Mozilla signing](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
+
+Firefox uses site icons available from open tabs, with a bundled globe icon for
+other bookmarks. Chromium uses its built-in favicon service.

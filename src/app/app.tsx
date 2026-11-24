@@ -4,13 +4,12 @@ import { DndContext, DragOverlay, MeasuringStrategy } from '@dnd-kit/core';
 import 'react-responsive-modal/styles.css';
 import { useStore } from 'zustand';
 
-import { GridContent } from '@widgets/GridContent';
-import { Sidebar } from '@widgets/Sidebar';
-
-import { bookmarkStore } from '@entities/bookmark';
-
-import { DropFeedbackContext } from '@shared/lib/dnd';
-import { MainLayout } from '@shared/ui/MainLayout';
+import { MainLayout } from '@/app/Layout';
+import { bookmarkStore } from '@/bookmarks';
+import { GridContent } from '@/bookmarks/components/Grid';
+import { DropFeedbackContext } from '@/lib/dnd';
+import { Sidebar } from '@/navigation/Sidebar';
+import { platform } from '@/platform';
 
 import { useAppDnd } from './app.dnd';
 import './global.css';
@@ -37,19 +36,12 @@ export const App = () => {
     void Promise.resolve(bookmarkStore.persist.rehydrate()).then(() => {
       if (!disposed) refresh();
     });
-    const events = [
-      chrome.bookmarks.onCreated,
-      chrome.bookmarks.onRemoved,
-      chrome.bookmarks.onChanged,
-      chrome.bookmarks.onMoved,
-      chrome.bookmarks.onChildrenReordered,
-    ];
-    events.forEach((event) => event?.addListener(scheduleRefresh));
+    const unsubscribe = platform.bookmarks.subscribe(scheduleRefresh);
     window.addEventListener('focus', scheduleRefresh);
     return () => {
       disposed = true;
       clearTimeout(refreshTimer);
-      events.forEach((event) => event?.removeListener(scheduleRefresh));
+      unsubscribe();
       window.removeEventListener('focus', scheduleRefresh);
     };
   }, []);
