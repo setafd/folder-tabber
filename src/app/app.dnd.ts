@@ -28,7 +28,7 @@ export function dropIntent(data: DropData, point: { x: number; y: number }, rect
   return 'inside';
 }
 
-export function indexTree(tree: FolderChildren[]) {
+function indexTree(tree: FolderChildren[]) {
   const map = new Map<string, FolderChildren>();
   const walk = (nodes: FolderChildren[], parentId?: string) => {
     for (const node of nodes) {

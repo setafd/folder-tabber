@@ -15,4 +15,3 @@ export const platform = IS_DEV
   : IS_FIREFOX
     ? createFirefoxPlatform(nativeApi())
     : createChromiumPlatform(nativeApi());
-export type { BrowserPlatform } from './contracts';

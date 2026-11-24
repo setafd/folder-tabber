@@ -25,7 +25,16 @@ export const useBookmarkDrag = (
       layout: card ? 'card' : undefined,
     } satisfies DropData,
   });
-  return { ...drag, setDropRef: drop.setNodeRef, intent: useDropFeedback(dropId), disabled: disabled || inert };
+  return {
+    attributes: drag.attributes,
+    listeners: drag.listeners,
+    isDragging: drag.isDragging,
+    setNodeRef: drag.setNodeRef,
+    setActivatorNodeRef: drag.setActivatorNodeRef,
+    setDropRef: drop.setNodeRef,
+    intent: useDropFeedback(dropId),
+    disabled: disabled || inert,
+  };
 };
 
 export const useFolderDrop = (id: string, scope: string) => {

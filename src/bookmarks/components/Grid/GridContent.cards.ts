@@ -2,7 +2,7 @@ import { type FolderChildren, isFolder, visibleChildren } from '@/bookmarks';
 import { GRID_CARD_CHROME, GRID_ROW_HEIGHT } from '@/bookmarks/layout/config';
 
 export const PREVIEW_COUNT = 24;
-export function visibleRows(node: FolderChildren, expanded: ReadonlySet<string>): number {
+function visibleRows(node: FolderChildren, expanded: ReadonlySet<string>): number {
   return (
     1 +
     (isFolder(node) && expanded.has(node.id)

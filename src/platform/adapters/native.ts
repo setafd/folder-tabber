@@ -7,7 +7,7 @@ export type NativeBrowser = Pick<typeof chrome, 'bookmarks' | 'tabs' | 'tabGroup
 type NativeBookmark = chrome.bookmarks.BookmarkTreeNode & { type?: BookmarkKind };
 type NativeOptions = { moveIndex: 'before-removal' | 'after-removal'; favicons: 'chromium' | 'tabs' };
 
-export function normalizeBookmark(node: NativeBookmark, root = false): BookmarkNode {
+function normalizeBookmark(node: NativeBookmark, root = false): BookmarkNode {
   const type = node.type ?? (typeof node.url === 'string' ? 'bookmark' : 'folder');
   return {
     id: node.id,
