@@ -70,3 +70,26 @@ Chrome bookmark APIs in an isolated test profile; dev mocks alone are insufficie
 
 Local reports, screenshots and browser scripts belong in ignored `artifacts/`.
 The obsolete implementation plans were moved there during the 2026-11-24 cleanup.
+
+## Release builds
+
+The `Build CRX` GitHub Actions workflow runs when a `v*.*.*` tag is pushed.
+It uses Node.js 24 and the pnpm version declared in `package.json`, installs from
+the frozen lockfile, builds `build/`, and packs the extension with Chrome.
+The CRX and ZIP are saved as workflow artifacts and attached to a GitHub Release
+with generated release notes.
+
+Add the existing extension's PEM private key as the repository Actions secret
+`CRX_PRIVATE_KEY` to keep the same extension ID between releases. Without the
+secret, the workflow generates a new key for each run, matching the reference
+workflow. The key is kept outside the packaged directory and removed after packing.
+
+Before releasing, set the same version in `package.json` and
+`public/manifest.json`, commit it, and push a matching tag, for example:
+
+```sh
+git tag v2.0.0
+git push origin v2.0.0
+```
+
+The release contains `folder-tabber-2.0.0.crx` and `folder-tabber-2.0.0.zip`.

@@ -1,0 +1,87 @@
+name: Build CRX
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build extension
+        run: pnpm run build
+
+      - name: Write private key
+        env:
+          CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+        run: |
+          umask 077
+          if [ -n "$CRX_PRIVATE_KEY" ]; then
+            printf '%s\n' "$CRX_PRIVATE_KEY" > "$RUNNER_TEMP/key.pem"
+          else
+            echo "No CRX_PRIVATE_KEY found — generating a fresh key"
+            openssl genrsa -out "$RUNNER_TEMP/key.pem" 2048
+          fi
+
+      - name: Pack CRX with Chrome
+        run: |
+          CHROME=$(command -v google-chrome-stable || \
+                   command -v google-chrome || \
+                   command -v chromium-browser || \
+                   command -v chromium || true)
+          if [ -z "$CHROME" ]; then
+            echo "Chrome not found"
+            exit 1
+          fi
+          "$CHROME" --no-sandbox \
+            --pack-extension="$GITHUB_WORKSPACE/build" \
+            --pack-extension-key="$RUNNER_TEMP/key.pem"
+          VERSION="${GITHUB_REF_NAME#v}"
+          mv build.crx "folder-tabber-${VERSION}.crx"
+
+      - name: Remove private key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/key.pem"
+
+      - name: Zip unpacked extension
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          (cd build && zip -r "../folder-tabber-${VERSION}.zip" .)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: folder-tabber
+          path: |
+            folder-tabber-*.crx
+            folder-tabber-*.zip
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            folder-tabber-*.crx
+            folder-tabber-*.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
