@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "steiger": "steiger ./src",
-    "prepare": "husky",
+    "prepare": "git config core.hooksPath .githooks",
     "knip": "knip",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -46,7 +46,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
-    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "knip": "^6.26.0",
     "prettier": "^3.9.5",
