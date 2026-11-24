@@ -1,129 +1,107 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
+
+import { GRID_CARD_WIDTH, GRID_GAP } from '@shared/config';
 
 export interface MasonryLayoutOptions {
-  /** Precondition: >= 1. The caller (the measurement hook) is responsible for clamping this. */
   columnCount: number;
   cardWidth: number;
   gap: number;
 }
-
 export interface MasonryLayoutResult {
-  /** Same order as the input `heights` array. */
   positions: { top: number; left: number }[];
   containerHeight: number;
 }
 
-/**
- * Greedy shortest-column bin-packing: places each card (in input order) into whichever
- * column is currently shortest, ties going to the leftmost column. Input order is
- * preserved deliberately (unlike a `grid-auto-flow: dense` backfill) so visual position
- * keeps matching the underlying data order.
- */
-export const computeMasonryLayout = (heights: number[], { columnCount, cardWidth, gap }: MasonryLayoutOptions): MasonryLayoutResult => {
-  const columnHeights = new Array<number>(columnCount).fill(0);
+export const computeMasonryLayout = (
+  heights: number[],
+  { columnCount, cardWidth, gap }: MasonryLayoutOptions,
+): MasonryLayoutResult => {
+  const columns = new Array<number>(Math.max(1, columnCount)).fill(0);
   const positions = heights.map((height) => {
-    const col = columnHeights.indexOf(Math.min(...columnHeights));
-    const top = columnHeights[col];
-    const left = col * (cardWidth + gap);
-
-    columnHeights[col] += height + gap;
-
-    return { top, left };
+    const col = columns.indexOf(Math.min(...columns));
+    const top = columns[col];
+    columns[col] += height + gap;
+    return { top, left: col * (cardWidth + gap) };
   });
-
-  const containerHeight = Math.max(0, Math.max(...columnHeights) - gap);
-
-  return { positions, containerHeight };
+  return { positions, containerHeight: Math.max(0, Math.max(...columns) - gap) };
 };
 
+export interface MasonryCard {
+  id: string;
+  narrowHeight: number;
+  wideHeight: number;
+  baseNarrowHeight?: number;
+  baseWideHeight?: number;
+}
 export interface MasonryItemPosition {
   top: number;
   left: number;
+  width: number;
+  span: number;
 }
 
-/**
- * Measures each registered card, runs `computeMasonryLayout`, and hands back per-id
- * positions. Reads and writes are kept in separate passes: `recompute` only reads
- * (`getBoundingClientRect`) across every card before computing anything, and the result is
- * applied via a single state update rather than looping through elements setting styles —
- * React commits every wrapper's new position together in one pass.
- */
-export const useMasonryLayout = (items: { id: string }[], { cardWidth, gap }: { cardWidth: number; gap: number }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef(new Map<string, HTMLElement>());
-  const registerCallbacks = useRef(new Map<string, (element: HTMLElement | null) => void>());
-
-  const [columnCount, setColumnCount] = useState(1);
-  const [positions, setPositions] = useState(new Map<string, MasonryItemPosition>());
-  const [containerHeight, setContainerHeight] = useState(0);
-
-  const recompute = useCallback(() => {
-    const heights = items.map((item) => itemRefs.current.get(item.id)?.getBoundingClientRect().height ?? 0);
-
-    const { positions: computed, containerHeight: nextHeight } = computeMasonryLayout(heights, {
-      columnCount,
-      cardWidth,
-      gap,
+export function computeAdaptiveMasonry(items: MasonryCard[], width: number, gap = GRID_GAP) {
+  const columnCount = Math.max(1, Math.floor((width + gap) / (GRID_CARD_WIDTH + gap)));
+  const cardWidth = Math.max(0, (width - gap * (columnCount - 1)) / columnCount);
+  const columns = new Array<number>(columnCount).fill(0);
+  const actualColumns = new Array<number>(columnCount).fill(0);
+  const positions = new Map<string, MasonryItemPosition>();
+  let maximum = 0;
+  let sum = 0;
+  for (const item of items) {
+    const narrowHeight = item.baseNarrowHeight ?? item.narrowHeight;
+    const wideHeight = item.baseWideHeight ?? item.wideHeight;
+    let best: { col: number; span: number; top: number; bottom: number; sum: number; score: number } | undefined;
+    for (let span = 1; span <= Math.min(2, columnCount); span++) {
+      if (span === 2 && (narrowHeight < 400 || wideHeight > narrowHeight * 0.75)) continue;
+      for (let col = 0; col <= columnCount - span; col++) {
+        const top = span === 1 ? columns[col] : Math.max(columns[col], columns[col + 1]);
+        const previous = columns[col] + (span === 2 ? columns[col + 1] : 0);
+        const bottom = top + (span === 1 ? narrowHeight : wideHeight) + gap;
+        const nextSum = sum - previous + span * bottom;
+        const holes = span * top - previous;
+        const score = Math.max(maximum, bottom) + nextSum * 0.05 + holes * 0.35 + top * 0.01;
+        if (!best || score < best.score) best = { col, span, top, bottom, sum: nextSum, score };
+      }
+    }
+    const chosen = best!;
+    for (let col = chosen.col; col < chosen.col + chosen.span; col++) columns[col] = chosen.bottom;
+    maximum = Math.max(maximum, chosen.bottom);
+    sum = chosen.sum;
+    const top =
+      chosen.span === 1
+        ? actualColumns[chosen.col]
+        : Math.max(actualColumns[chosen.col], actualColumns[chosen.col + 1]);
+    const bottom = top + (chosen.span === 1 ? item.narrowHeight : item.wideHeight) + gap;
+    for (let col = chosen.col; col < chosen.col + chosen.span; col++) actualColumns[col] = bottom;
+    positions.set(item.id, {
+      top,
+      left: chosen.col * (cardWidth + gap),
+      width: cardWidth * chosen.span + gap * (chosen.span - 1),
+      span: chosen.span,
     });
+  }
+  return { positions, containerHeight: Math.max(0, Math.max(...actualColumns) - gap), columnCount };
+}
 
-    setPositions(new Map(items.map((item, index) => [item.id, computed[index]])));
-    setContainerHeight(nextHeight);
-  }, [items, columnCount, cardWidth, gap]);
-
-  // Lets the content-resize effect below always call the latest `recompute` without needing
-  // it in its own dependency array, so it doesn't tear down and recreate its ResizeObserver
-  // on every column-count change (e.g. every window resize) — only when the set of cards
-  // actually changes.
-  const recomputeRef = useRef(recompute);
+export const useMasonryLayout = (items: MasonryCard[], frozen = false) => {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(0);
+  const [settled, setSettled] = useState(() => computeAdaptiveMasonry([], 0));
   useLayoutEffect(() => {
-    recomputeRef.current = recompute;
-  }, [recompute]);
-
-  // Column count depends on the container's available width, which only the browser knows.
-  useLayoutEffect(() => {
-    const container = containerRef.current;
     if (!container) return;
-
-    const updateColumnCount = () => {
-      const width = container.getBoundingClientRect().width;
-      setColumnCount(Math.max(1, Math.floor((width + gap) / (cardWidth + gap))));
+    const update = () => {
+      if (!frozen) setWidth(container.getBoundingClientRect().width);
     };
-
-    updateColumnCount();
-    const observer = new ResizeObserver(updateColumnCount);
+    update();
+    const observer = new ResizeObserver(update);
     observer.observe(container);
     return () => observer.disconnect();
-  }, [cardWidth, gap]);
-
-  // Re-run the full layout whenever the set of cards or the column count changes.
+  }, [container, frozen]);
+  const next = useMemo(() => computeAdaptiveMasonry(items, width), [items, width]);
   useLayoutEffect(() => {
-    recompute();
-  }, [recompute]);
-
-  // Re-run whenever any card's own content height changes (a bookmark added/edited/removed
-  // inside it). A single shared ResizeObserver across every card naturally coalesces
-  // simultaneous height changes into one callback/recompute, rather than one per card.
-  useLayoutEffect(() => {
-    const observer = new ResizeObserver(() => recomputeRef.current());
-    itemRefs.current.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, [items]);
-
-  const registerItem = useCallback((id: string) => {
-    let callback = registerCallbacks.current.get(id);
-    if (!callback) {
-      callback = (element: HTMLElement | null) => {
-        if (element) {
-          itemRefs.current.set(id, element);
-        } else {
-          itemRefs.current.delete(id);
-          registerCallbacks.current.delete(id);
-        }
-      };
-      registerCallbacks.current.set(id, callback);
-    }
-    return callback;
-  }, []);
-
-  return { containerRef, containerHeight, positions, registerItem };
+    if (!frozen) setSettled(next);
+  }, [next, frozen]);
+  const layout = frozen ? settled : next;
+  return { containerRef: setContainer, ...layout, ready: width > 0 };
 };

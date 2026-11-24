@@ -29,33 +29,22 @@ function findNode(
   return null;
 }
 
-async function resolveWithCallback<T>(
-  value: T,
-  callback?: (value: T) => void,
-): Promise<T | void> {
+async function resolveWithCallback<T>(value: T, callback?: (value: T) => void): Promise<T | void> {
+  const snapshot = structuredClone(value);
   await delay();
   if (callback) {
-    callback(value);
+    callback(snapshot);
     return;
   }
-  return value;
+  return snapshot;
 }
 
-
 type MockBookmarks = {
-  getTree(
-    callback?: (result: BTreeNode[]) => void,
-  ): Promise<BTreeNode[] | void>;
+  getTree(callback?: (result: BTreeNode[]) => void): Promise<BTreeNode[] | void>;
 
-  getSubTree(
-    id: string,
-    callback?: (result: BTreeNode[]) => void,
-  ): Promise<BTreeNode[] | void>;
+  getSubTree(id: string, callback?: (result: BTreeNode[]) => void): Promise<BTreeNode[] | void>;
 
-  create(
-    details: chrome.bookmarks.CreateDetails,
-    callback?: (result: BTreeNode) => void,
-  ): Promise<BTreeNode | void>;
+  create(details: chrome.bookmarks.CreateDetails, callback?: (result: BTreeNode) => void): Promise<BTreeNode | void>;
 
   update(
     id: string,
@@ -100,7 +89,10 @@ export const mockBookmarks: MockBookmarks = {
       syncing: false,
     };
 
+    if (!details.url) node.children = [];
+    if (node.index! < 0 || node.index! > parentResult.node.children.length) throw new Error('Invalid index');
     parentResult.node.children.splice(node.index!, 0, node);
+    normalizeTree();
     return resolveWithCallback(node, callback);
   },
 
@@ -118,23 +110,18 @@ export const mockBookmarks: MockBookmarks = {
       throw new Error(`Node ${id} not found`);
     }
 
-    // remove from old parent
-    source.parent.children.splice(source.index, 1);
-
     const targetParentId = destination.parentId ?? source.parent.id;
     const targetParentResult = findNode(mockData, (n) => n.id === targetParentId);
-
-    if (!targetParentResult || !targetParentResult.node.children) {
-      throw new Error(`Target parent ${targetParentId} not found`);
-    }
-
-    const newIndex =
-      destination.index ?? targetParentResult.node.children.length;
-
-    source.node.parentId = targetParentId;
-    source.node.index = newIndex;
-
+    if (!targetParentResult?.node.children || targetParentResult.node.url !== undefined)
+      throw new Error(`Invalid parent ${targetParentId}`);
+    if (findNode([source.node], (n) => n.id === targetParentId))
+      throw new Error('Cannot move a folder into itself or its descendants');
+    let newIndex = destination.index ?? targetParentResult.node.children.length;
+    if (newIndex < 0 || newIndex > targetParentResult.node.children.length) throw new Error('Invalid index');
+    if (source.parent === targetParentResult.node && newIndex > source.index) newIndex--;
+    source.parent.children.splice(source.index, 1);
     targetParentResult.node.children.splice(newIndex, 0, source.node);
+    normalizeTree();
 
     return resolveWithCallback(source.node, callback);
   },
@@ -145,17 +132,22 @@ export const mockBookmarks: MockBookmarks = {
       throw new Error(`Node ${id} not found`);
     }
 
+    if (found.node.children?.length) throw new Error('Cannot remove a non-empty folder');
     found.parent.children.splice(found.index, 1);
+    normalizeTree();
     await delay();
     callback?.();
   },
 
   async removeTree(id, callback) {
-    // для bookmarks removeTree == remove
-    return this.remove(id, callback);
+    const found = findNode(mockData, (node) => node.id === id);
+    if (!found?.parent?.children || found.node.url !== undefined) throw new Error('Invalid folder');
+    found.parent.children.splice(found.index, 1);
+    normalizeTree();
+    await delay();
+    callback?.();
   },
 };
-
 
 const mockData: BTreeNode[] = [
   {
@@ -618,3 +610,14 @@ const mockData: BTreeNode[] = [
     title: '',
   },
 ];
+
+function normalizeTree() {
+  const walk = (nodes: BTreeNode[], parentId?: string) =>
+    nodes.forEach((node, index) => {
+      node.index = index;
+      node.parentId = parentId;
+      if (node.children) walk(node.children, node.id);
+    });
+  walk(mockData);
+}
+normalizeTree();

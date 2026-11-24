@@ -4,3 +4,5 @@ export { default as EditIcon } from './EditIcon';
 export { default as DeleteSquareIcon } from './DeleteSquareIcon';
 export { default as PlusIcon } from './PlusIcon';
 export { default as CheckIcon } from './CheckIcon';
+export { DragHandleIcon } from './DragHandleIcon';
+export { ChevronIcon } from './ChevronIcon';

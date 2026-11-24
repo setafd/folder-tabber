@@ -1,27 +1,32 @@
 .createInputContainer {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
-  width: 100%;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  height: 36px;
 }
-
 .createInput {
-  padding: 0.325rem;
-  height: 2rem;
-  border-radius: 0.25rem;
-  width: 100%;
-  border: none;
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  height: 28px;
+  padding: 4px 6px;
+  font-size: 13px;
+  line-height: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
-
-.submitButton {
-  background-color: var(--background-color);
-  border: none;
-  cursor: pointer;
-  aspect-ratio: 1;
-  border-radius: 16rem;
-
+.createInputContainer .submitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border-radius: 4px;
   &:hover {
-    filter: invert(0.1);
+    background: var(--hover-color);
   }
 }

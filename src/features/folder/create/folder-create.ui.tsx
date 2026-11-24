@@ -32,12 +32,13 @@ export const FolderCreateItem = ({ buttonClassName, parentId }: FolderCreateItem
   return isInput ? (
     <form ref={ref} className={styles.createInputContainer} onSubmit={onSubmit}>
       <input
+        aria-label="Folder name"
         autoFocus
         className={styles.createInput}
         onKeyDown={onKeyDown}
         {...register('title')}
       />
-      <Button variant="icon" type="submit" className={styles.submitButton}>
+      <Button aria-label="Save folder" variant="icon" type="submit" className={styles.submitButton}>
         <CheckIcon size={20} />
       </Button>
     </form>

@@ -1,10 +1,9 @@
-# dependencies
 node_modules/
 
-# build
 build/
 
-# vscode
 .vscode/
 
 *.pem
+
+artifacts/

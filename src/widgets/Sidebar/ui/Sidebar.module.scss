@@ -1,91 +1,122 @@
 .navigation {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--border-color);
   height: 100%;
-  padding: 0.5rem;
-  position: relative;
-
   overflow: auto;
-
-  gap: 1rem;
+  padding: 18px 10px;
+  border-right: 1px solid var(--border-color);
+  background: var(--background-color);
 }
-
-.reorderButton {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-
-  height: 2rem;
-  width: 2rem;
-
-  &[data-active='true'] {
-    filter: invert(1);
-
-    background-color: var(--background-color);
+.section {
+  margin-bottom: 24px;
+}
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground-light-color);
+  margin-bottom: 8px;
+  button {
+    text-align: left;
+    padding: 8px;
+    width: 100%;
+    border-radius: 5px;
+  }
+  button:hover,
+  button[aria-current='page'] {
+    background: var(--hover-color);
+    color: var(--foreground-color);
+  }
+  button[data-drop='inside'] {
+    outline: 2px solid var(--accent-color);
   }
 }
-
-.section {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem;
-  gap: 0.25rem;
-}
-
-.sectionTitle {
-  font-size: 0.875rem;
-  padding: 0.25rem;
-}
-
 .folderList {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 3px;
 }
-
 .folderWrapper {
   display: flex;
-  position: relative;
   align-items: center;
-  cursor: grab;
-
-  height: 2rem;
-
-  user-select: none;
-
-  &:active {
-    cursor: grabbing;
+  position: relative;
+  height: 36px;
+  border-radius: 5px;
+  min-width: 0;
+  &:hover,
+  &:focus-within {
+    background: var(--hover-color);
   }
-
-  .deleteButton {
-    display: none;
+  &[data-active='true'] {
+    background: var(--selection-color);
   }
-
-  & > .folderItem ~ .deleteButton {
-    display: block;
+  &[data-drop='inside'] {
+    outline: 2px solid var(--accent-color);
+    outline-offset: -2px;
+  }
+  &[data-drop='before']::before,
+  &[data-drop='after']::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-color);
+    z-index: 2;
+    pointer-events: none;
+  }
+  &[data-drop='before']::before {
+    top: -2px;
+  }
+  &[data-drop='after']::after {
+    bottom: -2px;
+  }
+  > :global(.drag-handle) {
+    position: relative;
+    z-index: 1;
   }
 }
-
 .folderItem {
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem 0.25rem;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+  text-align: left;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  height: 100%;
+  padding: 8px 4px;
+  font-size: 13px;
+  border-radius: 4px;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+}
+.folderLabel {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
-  text-align: start;
-
-  border-radius: 0.3rem;
-  background-color: var(--background-color);
-
-  &:hover {
-    filter: invert(0.1);
+  white-space: nowrap;
+}
+.rowActions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  button {
+    width: 26px;
+    height: 28px;
+    padding: 3px;
   }
-
-  &[data-active='true'] {
-    filter: invert(1);
+  .folderWrapper:hover &,
+  .folderWrapper:focus-within & {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .rowActions {
+    opacity: 1;
   }
 }

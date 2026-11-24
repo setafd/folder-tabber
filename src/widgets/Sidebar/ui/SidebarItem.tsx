@@ -1,57 +1,62 @@
-import { memo } from 'react';
-
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-
 import { FolderDeleteButton } from '@features/folder/delete';
 import { FolderEditItemWrapper } from '@features/folder/edit';
 
-import { TopLevelFolder } from '@entities/bookmark';
+import { type TopLevelFolder, useBookmarkDrag } from '@entities/bookmark';
+
+import { DragHandleIcon } from '@shared/icons';
 
 import styles from './Sidebar.module.scss';
 
-const SidebarItemRaw = ({
+export const SidebarItem = ({
   folder,
   parentId,
-  onChangeFolder,
   isSelected,
+  onChangeFolder,
 }: {
   folder: TopLevelFolder['children'][number];
   parentId: string;
-  onChangeFolder: (id: string, title: string) => void;
   isSelected: boolean;
+  onChangeFolder: (id: string, title: string) => void;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: folder.id,
-    data: { type: 'item', parentId, isFolder: true },
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
+  const drag = useBookmarkDrag({ ...folder, parentId }, 'sidebar');
   return (
-    <li ref={setNodeRef} {...attributes} {...listeners} style={style} className={styles.folderWrapper}>
+    <li
+      ref={(element) => {
+        drag.setNodeRef(element);
+        drag.setDropRef(element);
+      }}
+      className={styles.folderWrapper}
+      data-drop={drag.intent}
+      data-active={isSelected}
+      style={{ opacity: drag.isDragging ? 0.35 : undefined }}
+    >
+      <button
+        ref={drag.setActivatorNodeRef}
+        {...drag.attributes}
+        {...drag.listeners}
+        className="drag-handle"
+        disabled={drag.disabled}
+        title="Drag to move"
+        aria-label={`Drag ${folder.title}`}
+      >
+        <DragHandleIcon />
+      </button>
       <FolderEditItemWrapper id={folder.id} title={folder.title}>
         {(showInput) => (
           <button
+            title={folder.title}
+            className={styles.folderItem}
+            aria-current={isSelected ? 'page' : undefined}
             onClick={() => onChangeFolder(folder.id, folder.title)}
             onDoubleClick={showInput}
-            data-active={isSelected}
-            className={styles.folderItem}
           >
-            {folder.title}
+            <span className={styles.folderLabel}>{folder.title}</span>
           </button>
         )}
       </FolderEditItemWrapper>
-      <FolderDeleteButton id={folder.id} className={styles.deleteButton} />
+      <span className={styles.rowActions}>
+        <FolderDeleteButton id={folder.id} />
+      </span>
     </li>
   );
 };
-
-export const SidebarItem = memo(
-  SidebarItemRaw,
-  (prev, next) =>
-    prev.folder.id === next.folder.id && prev.folder.title === next.folder.title && prev.isSelected === next.isSelected,
-);

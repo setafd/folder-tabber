@@ -1,58 +1,53 @@
 import { DndContext } from '@dnd-kit/core';
-import { render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { FolderChildren } from '@entities/bookmark';
+import { type FolderChildren } from '@entities/bookmark';
 
 import { GridFolder } from './GridFolder';
 
-// Spy on the real useDraggable so its behavior is untouched but we can inspect what id it was
-// called with — that id is the thing this regression actually guards.
-vi.mock('@dnd-kit/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@dnd-kit/core')>();
-  return { ...actual, useDraggable: vi.fn(actual.useDraggable) };
-});
-
-const noop = () => {};
-
 const folder: FolderChildren = {
-  id: '93',
-  title: 'Group 7',
+  id: 'F',
+  title: 'Folder',
   syncing: false,
-  children: [],
+  children: [
+    {
+      id: 'nested',
+      title: 'Nested',
+      syncing: false,
+      children: [{ id: 'B', title: 'Hidden bookmark', url: 'https://example.com', syncing: false }],
+    },
+  ],
 };
-
-describe('GridFolder', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('registers its inert root-card draggable under a container-prefixed id, never the raw folder id', async () => {
-    const { useDraggable } = await import('@dnd-kit/core');
-
+const noop = () => {};
+const props = {
+  expanded: new Set<string>(),
+  showAll: new Set<string>(),
+  onToggle: noop,
+  onShowAll: noop,
+  onClickBookmark: noop,
+  onClickCreateButton: noop,
+  onClickEditButton: noop,
+};
+afterEach(cleanup);
+describe('nested folders', () => {
+  it('renders the folder row without mounting its collapsed subtree', () => {
+    const toggle = vi.fn();
     render(
       <DndContext>
-        <GridFolder folder={folder} isRoot onClickBookmark={noop} onClickCreateButton={noop} onClickEditButton={noop} />
+        <GridFolder folder={folder} {...props} onToggle={toggle} />
       </DndContext>,
     );
-
-    // The root card's folder id is the currently selected folder's real id — the exact same
-    // id the Sidebar uses for that folder's own (real, activatable) draggable entry. If this
-    // ever regresses to the raw id, the two collide in dnd-kit's shared draggable registry
-    // and dnd-kit can measure the wrong DOM node as the active drag rect (see GridFolder.tsx).
-    expect(useDraggable).toHaveBeenCalledWith(expect.objectContaining({ id: 'container:93' }));
-    expect(useDraggable).not.toHaveBeenCalledWith(expect.objectContaining({ id: '93' }));
+    expect(screen.queryByRole('link', { name: 'Hidden bookmark' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand Nested' }));
+    expect(toggle).toHaveBeenCalledWith('nested');
   });
-
-  it('registers a non-root folder card draggable under its own raw id (no collision risk)', async () => {
-    const { useDraggable } = await import('@dnd-kit/core');
-
+  it('uses separate grid and sidebar draggable namespaces, including root views', () => {
     render(
       <DndContext>
-        <GridFolder folder={folder} onClickBookmark={noop} onClickCreateButton={noop} onClickEditButton={noop} />
+        <GridFolder folder={folder} {...props} isRoot />
       </DndContext>,
     );
-
-    expect(useDraggable).toHaveBeenCalledWith(expect.objectContaining({ id: '93' }));
+    expect(screen.queryByRole('button', { name: /Drag Folder/ })).toBeNull();
   });
 });

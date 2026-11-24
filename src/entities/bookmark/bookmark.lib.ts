@@ -1,19 +1,22 @@
-interface ResolveMoveIndexArgs {
-  /** Whether the drop target container is the same as the drag source container. */
-  isSameContainer: boolean;
-  /** Whether the pointer was released below the hovered item's vertical center. */
-  isBelow: boolean | null;
-  /** Index of the dragged item within its container. */
-  oldIndex: number;
-  /** Index of the hovered item within the target container. */
-  overIndex: number;
+type Node = chrome.bookmarks.BookmarkTreeNode;
+
+export const isFolder = (node: Node) => node.url === undefined;
+
+export function findBookmark(nodes: Node[], id: string): Node | undefined {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    const found = node.children && findBookmark(node.children, id);
+    if (found) return found;
+  }
 }
 
-interface ResolvedMove {
-  /** Index to splice the item into for the local (optimistic) list. */
-  localIndex: number;
-  /** Index to pass to `chrome.bookmarks.move` (accounts for Chrome's move semantics). */
-  apiIndex: number;
+export function bookmarkPath(nodes: Node[], id: string): Node[] {
+  for (const node of nodes) {
+    if (node.id === id) return [node];
+    const path = node.children && bookmarkPath(node.children, id);
+    if (path?.length) return [node, ...path];
+  }
+  return [];
 }
 
 export const resolveMoveIndex = ({
@@ -21,18 +24,14 @@ export const resolveMoveIndex = ({
   isBelow,
   oldIndex,
   overIndex,
-}: ResolveMoveIndexArgs): ResolvedMove | null => {
-  let localIndex: number;
-
-  if (isSameContainer) {
-    if (overIndex === oldIndex) return null;
-    localIndex =
-      overIndex < oldIndex ? (isBelow ? overIndex + 1 : overIndex) : isBelow ? overIndex : overIndex - 1;
-  } else {
-    localIndex = overIndex;
-  }
-
-  const apiIndex = isBelow ? (isSameContainer ? localIndex + 1 : localIndex) : localIndex;
-
-  return { localIndex, apiIndex };
+}: {
+  isSameContainer: boolean;
+  isBelow: boolean | null;
+  oldIndex: number;
+  overIndex: number;
+}) => {
+  if (oldIndex < 0 || overIndex < 0 || (isSameContainer && oldIndex === overIndex)) return null;
+  const apiIndex = overIndex + (isBelow ? 1 : 0);
+  const localIndex = apiIndex - (isSameContainer && oldIndex < apiIndex ? 1 : 0);
+  return isSameContainer && localIndex === oldIndex ? null : { apiIndex, localIndex };
 };

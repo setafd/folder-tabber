@@ -1,21 +1,14 @@
-import { useEffect } from 'react';
-
 import { useStore } from 'zustand';
 
 import { bookmarkStore } from '@entities/bookmark';
 
 export const useBookmarks = () => {
-  const fetchFolderChildrens = useStore(bookmarkStore, (state) => state.fetchFolderChildrens);
-  const folders = useStore(bookmarkStore, (state) => state.folderChildrens);
-  const selectedFolder = useStore(bookmarkStore, (state) => state.selectedFolder);
-
-  useEffect(() => {
-    if (selectedFolder) {
-      fetchFolderChildrens();
-    }
-  }, [selectedFolder, fetchFolderChildrens]);
-
-  const isEmpty = folders.length === 0 && selectedFolder;
-
-  return { folders, isEmpty, title: selectedFolder?.title, folderId: selectedFolder?.id };
+  const folders = useStore(bookmarkStore, (s) => s.folderChildrens);
+  const selectedFolder = useStore(bookmarkStore, (s) => s.selectedFolder);
+  return {
+    folders,
+    isEmpty: folders.length === 0 && !!selectedFolder,
+    title: selectedFolder?.title,
+    folderId: selectedFolder?.id,
+  };
 };

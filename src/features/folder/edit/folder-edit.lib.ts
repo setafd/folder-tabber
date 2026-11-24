@@ -8,7 +8,7 @@ import { bookmarkStore, editBookmark } from '@entities/bookmark';
 
 export const useRenameFolder = (id: string, title: string) => {
   const [isInput, setIsInput] = useState(false);
-  const { register, handleSubmit } = useForm<{ title: string }>({
+  const { register, handleSubmit, reset } = useForm<{ title: string }>({
     resolver: zodResolver(z.object({ title: z.string().nonempty() })),
     defaultValues: { title },
   });
@@ -36,7 +36,10 @@ export const useRenameFolder = (id: string, title: string) => {
   };
 
   return {
-    showInput: () => setIsInput(true),
+    showInput: () => {
+      reset({ title });
+      setIsInput(true);
+    },
     hideInput: () => setIsInput(false),
     register,
     onSubmit: handleSubmit(onSubmit),

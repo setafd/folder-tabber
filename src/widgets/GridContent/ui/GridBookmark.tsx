@@ -1,23 +1,40 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { memo } from 'react';
 
-import { BookmarkItem, BookmarkItemProps } from '@entities/bookmark';
+import { BookmarkItem, type BookmarkItemProps, useBookmarkDrag } from '@entities/bookmark';
 
-export const GridBookmark = ({ parentId, ...props }: BookmarkItemProps & { parentId: string }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: props.id,
-    data: { type: 'item', parentId, isFolder: false },
-  });
+import { DragHandleIcon } from '@shared/icons';
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : undefined,
-  };
-
+export const GridBookmark = memo(function GridBookmark({
+  parentId,
+  ...props
+}: BookmarkItemProps & { parentId: string }) {
+  const drag = useBookmarkDrag({ ...props, parentId }, 'grid');
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <BookmarkItem {...props} />
+    <div
+      ref={(element) => {
+        drag.setNodeRef(element);
+        drag.setDropRef(element);
+      }}
+      data-drop={drag.intent}
+      className="bookmark-drop"
+      style={{ opacity: drag.isDragging ? 0.35 : undefined }}
+    >
+      <BookmarkItem
+        {...props}
+        dragHandle={
+          <button
+            ref={drag.setActivatorNodeRef}
+            {...drag.attributes}
+            {...drag.listeners}
+            disabled={drag.disabled}
+            className="drag-handle"
+            aria-label={`Drag ${props.title}`}
+            title="Drag to move"
+          >
+            <DragHandleIcon />
+          </button>
+        }
+      />
     </div>
   );
-};
+});

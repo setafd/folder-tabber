@@ -5,14 +5,12 @@
   border-radius: 16rem;
   height: 100%;
 
-  position: absolute;
-  right: 0;
 
   color: red;
 }
 
 .deleteIcon {
-  opacity: 0;
+  opacity: 0.65;
 
   .deleteButton:hover &,
   .deleteButton:focus & {
@@ -24,7 +22,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 25rem;
+  width: min(25rem, 100%);
 
   & .description {
     line-height: 1.5;

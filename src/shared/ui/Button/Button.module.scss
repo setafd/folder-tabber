@@ -21,6 +21,7 @@
 
 .primary {
   background-color: var(--accent-color);
+  color: white;
 
   &:hover {
     filter: brightness(1.2) saturate(1.25);

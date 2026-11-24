@@ -1,101 +1,148 @@
-import { useMemo } from 'react';
+import { type CSSProperties, memo } from 'react';
 
-import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  BookmarkFolder,
+  type BookmarkItemProps,
+  type FolderChildren,
+  bookmarkStore,
+  isFolder,
+  useBookmarkDrag,
+  useFolderDrop,
+} from '@entities/bookmark';
 
-import { BookmarkFolder, BookmarkItemProps, FolderChildren } from '@entities/bookmark';
+import { GRID_HEADER_HEIGHT, GRID_ROW_HEIGHT } from '@shared/config';
+import { ChevronIcon, DragHandleIcon, FolderIcon } from '@shared/icons';
 
-import { FolderIcon } from '@shared/icons';
-import { toContainerId } from '@shared/lib/dnd';
+import { PREVIEW_COUNT, folderCardLayout } from '../GridContent.cards';
+import styles from '../GridContent.module.scss';
 
 import { GridBookmark } from './GridBookmark';
 
+
 type GridFolderProps = {
   folder: FolderChildren;
-  /** True only for the selected folder's loose-bookmarks card (not draggable, not editable). */
   isRoot?: boolean;
+  nested?: boolean;
+  wide?: boolean;
+  expanded: ReadonlySet<string>;
+  showAll: ReadonlySet<string>;
+  onToggle: (id: string) => void;
+  onShowAll: (id: string) => void;
   onClickBookmark: BookmarkItemProps['onClick'];
   onClickCreateButton: (parentId: string) => void;
   onClickEditButton: (type: 'bookmark' | 'folder', id: string, title: string, url?: string) => void;
 };
-
-export const GridFolder = ({
-  folder,
-  isRoot,
-  onClickBookmark,
-  onClickCreateButton,
-  onClickEditButton,
-}: GridFolderProps) => {
-  const { setNodeRef: setDroppableRef } = useDroppable({
-    id: toContainerId(folder.id),
-    data: { type: 'container', parentId: folder.id },
-  });
-  // The root card's id is the selected folder's real id — the same id the Sidebar uses for
-  // that folder's own entry. Its item-role draggable is never actually activatable (no
-  // handle is rendered below, so no listeners are ever attached to trigger it), but the hook
-  // must still be called (Rules of Hooks), and dnd-kit registers whatever id it's given
-  // regardless of whether a node ref is attached. Giving it the raw folder id here would
-  // collide with the Sidebar's real, activatable registration for that same folder in
-  // dnd-kit's shared registry — reusing the container-id prefix keeps this inert registration
-  // out of the raw-id namespace entirely.
-  const { setNodeRef: setDraggableRef, setActivatorNodeRef, listeners, attributes } = useDraggable({
-    id: isRoot ? toContainerId(folder.id) : folder.id,
-    data: { type: 'item', isFolder: true },
-  });
-
-  const setCardRef = (element: HTMLElement | null) => {
-    setDroppableRef(element);
-    if (!isRoot) {
-      setDraggableRef(element);
-    }
-  };
-
-  const children = folder.children ?? [];
-  const bookmarkIds = useMemo(
-    () => (folder.children ?? []).filter((child) => !child.children).map((child) => child.id),
-    [folder.children],
-  );
-
-  const dragHandle = isRoot ? undefined : (
-    <span ref={setActivatorNodeRef} {...listeners} {...attributes} style={{ display: 'flex', cursor: 'grab' }}>
-      <FolderIcon size={18} />
-    </span>
-  );
-
+export const GridFolder = memo(function GridFolder(props: GridFolderProps) {
+  const {
+    folder,
+    isRoot,
+    nested,
+    wide,
+    expanded,
+    showAll,
+    onToggle,
+    onShowAll,
+    onClickBookmark,
+    onClickCreateButton,
+    onClickEditButton,
+  } = props;
+  const drag = useBookmarkDrag(folder, 'grid', isRoot, !nested);
+  const drop = useFolderDrop(folder.id, 'grid');
+  const open = !nested || expanded.has(folder.id);
+  const layout = nested ? null : folderCardLayout(folder, expanded, showAll.has(folder.id));
+  const children = nested ? (open ? (folder.children ?? []) : []) : layout!.children;
+  const renderChild = (child: FolderChildren) =>
+    isFolder(child) ? (
+      <GridFolder key={child.id} {...props} folder={child} nested isRoot={false} wide={false} />
+    ) : (
+      <GridBookmark
+        key={child.id}
+        parentId={folder.id}
+        id={child.id}
+        title={child.title}
+        url={child.url}
+        onClick={onClickBookmark}
+        onEdit={onClickEditButton}
+      />
+    );
   return (
-    <div ref={setCardRef}>
+    <div
+      ref={drag.setNodeRef}
+      style={
+        {
+          opacity: drag.isDragging ? 0.35 : undefined,
+          '--bookmark-row': `${GRID_ROW_HEIGHT}px`,
+          '--folder-header': `${GRID_HEADER_HEIGHT}px`,
+        } as CSSProperties
+      }
+    >
       <BookmarkFolder
         id={folder.id}
         title={folder.title}
         isRoot={isRoot}
-        dragHandle={dragHandle}
+        nested={nested}
+        count={folder.children?.length ?? 0}
+        headerRef={isRoot ? undefined : drag.setDropRef}
+        intent={drag.intent ?? drop.intent}
+        onOpen={
+          isRoot
+            ? undefined
+            : () => {
+                void bookmarkStore.getState().setSelectedFolder(folder);
+              }
+        }
         onClickCreateButton={() => onClickCreateButton(folder.id)}
         onEdit={onClickEditButton}
+        toggle={
+          nested && (
+            <button
+              aria-expanded={open}
+              aria-label={`${open ? 'Collapse' : 'Expand'} ${folder.title}`}
+              className={styles.expandButton}
+              onClick={() => onToggle(folder.id)}
+            >
+              <ChevronIcon expanded={open} />
+            </button>
+          )
+        }
+        dragHandle={
+          isRoot ? undefined : (
+            <button
+              ref={drag.setActivatorNodeRef}
+              {...drag.attributes}
+              {...drag.listeners}
+              disabled={drag.disabled}
+              className={`drag-handle ${nested ? 'folder-drag-handle' : ''}`}
+              aria-label={`Drag ${folder.title}`}
+              title="Drag to move"
+            >
+              {nested ? <FolderIcon size={16} aria-hidden="true" /> : <DragHandleIcon />}
+            </button>
+          )
+        }
       >
-        <SortableContext id={folder.id} items={bookmarkIds} strategy={verticalListSortingStrategy}>
-          {children.map((child) =>
-            child.children ? (
-              <GridFolder
-                key={child.id}
-                folder={child}
-                onClickBookmark={onClickBookmark}
-                onClickCreateButton={onClickCreateButton}
-                onClickEditButton={onClickEditButton}
-              />
+        {open && (
+          <div
+            ref={drop.setNodeRef}
+            className={nested ? styles.nestedContent : styles.cardBody}
+            data-inside={drop.intent === 'inside' || undefined}
+          >
+            {wide && !nested ? (
+              <div className={styles.cardColumns}>
+                <div>{children.slice(0, layout!.split).map(renderChild)}</div>
+                <div>{children.slice(layout!.split).map(renderChild)}</div>
+              </div>
             ) : (
-              <GridBookmark
-                key={child.id}
-                parentId={folder.id}
-                id={child.id}
-                url={child.url}
-                title={child.title}
-                onClick={onClickBookmark}
-                onEdit={onClickEditButton}
-              />
-            ),
-          )}
-        </SortableContext>
+              children.map(renderChild)
+            )}
+            {!nested && (folder.children?.length ?? 0) > PREVIEW_COUNT && (
+              <button className={styles.showAll} onClick={() => onShowAll(folder.id)}>
+                {showAll.has(folder.id) ? 'Show fewer' : `Show all ${folder.children!.length} items`}
+              </button>
+            )}
+          </div>
+        )}
       </BookmarkFolder>
     </div>
   );
-};
+});

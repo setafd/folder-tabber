@@ -25,7 +25,7 @@ export const FolderDeleteButton = ({ id, className }: { id: string, className?: 
   };
 
   return (
-    <Button variant="icon" className={`${styles.deleteButton} ${className}`} onClick={() => onDeleteFolderWrapper(id)}>
+    <Button variant="icon" title="Delete folder" aria-label="Delete folder" className={`${styles.deleteButton} ${className}`} onClick={() => onDeleteFolderWrapper(id)}>
       <DeleteSquareIcon className={styles.deleteIcon} size={20} />
     </Button>
   );

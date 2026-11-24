@@ -1,139 +1,162 @@
 import { createStore } from 'zustand';
-import { type PersistOptions, createJSONStorage, persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { syncTabs } from 'zustand-sync-tabs';
 
 import { IS_DEV } from '@shared/config';
 
-import { getBookmarksTree, getSubTree } from './bookmark.api';
+import { getBookmarksTree, moveBookmark } from './bookmark.api';
+import { bookmarkPath, findBookmark, isFolder } from './bookmark.lib';
 
-type Folder = {
-  id: string;
-  title: string;
-  index: number;
-};
-
+export type FolderChildren = chrome.bookmarks.BookmarkTreeNode;
 export interface TopLevelFolder {
   id: string;
   title: string;
-  children: Folder[];
+  children: { id: string; title: string; index: number }[];
 }
-
-export type FolderChildren = chrome.bookmarks.BookmarkTreeNode;
+type Selection = { id: string; title: string } | null;
 
 interface BookmarkState {
+  tree: FolderChildren[];
   folders: TopLevelFolder[];
-  fetchFolders: () => Promise<void>;
-  selectedFolder: {
-    id: string;
-    title: string;
-  } | null;
-  setSelectedFolder: (folder: { id: string; title: string } | null) => Promise<void>;
-  fetchFolderChildrens: () => void;
+  selectedFolder: Selection;
+  breadcrumbs: FolderChildren[];
   folderChildrens: FolderChildren[];
   folderChildrenRaw: FolderChildren[];
-  rootParentsIds: string[];
+  isLoading: boolean;
+  isMoving: boolean;
+  error: string | null;
+  fetchFolders: () => Promise<void>;
+  fetchFolderChildrens: () => Promise<void>;
+  setSelectedFolder: (folder: Selection) => Promise<void>;
+  moveNode: (id: string, parentId: string, index?: number) => Promise<boolean>;
 }
 
-type PersistedBookmarkState = Pick<
-  BookmarkState,
-  'folders' | 'selectedFolder' | 'folderChildrens' | 'folderChildrenRaw'
->;
+function selectedView(tree: FolderChildren[], selection: Selection) {
+  const path = selection ? bookmarkPath(tree, selection.id) : [];
+  const selected = path[path.length - 1];
+  const folderChildrenRaw = selected?.children ?? [];
+  const loose = folderChildrenRaw.filter((node) => !isFolder(node));
+  const folderChildrens = folderChildrenRaw.filter(isFolder);
+  if (selected && loose.length)
+    folderChildrens.unshift({ ...selected, title: 'Bookmarks in this folder', children: loose });
+  return {
+    selectedFolder: selected ? { id: selected.id, title: selected.title } : null,
+    breadcrumbs: path,
+    folderChildrenRaw,
+    folderChildrens,
+  };
+}
 
-const persistOptions: PersistOptions<BookmarkState, PersistedBookmarkState> = {
-  name: 'bookmark-storage',
-  version: 2,
-  storage: IS_DEV
-    ? createJSONStorage(() => localStorage)
-    : createJSONStorage(() => ({
-        getItem: async (name: string): Promise<string | null> => {
-          const result = await chrome.storage.local.get([name]);
-          return result[name] || null;
-        },
-        setItem: async (name: string, value: string): Promise<void> =>
-          await chrome.storage.local.set({ [name]: value }),
-        removeItem: async (name: string): Promise<void> => chrome.storage.local.remove([name]),
-      })),
-  partialize: (state) => ({
-    folders: state.folders,
-    selectedFolder: state.selectedFolder,
-    folderChildrens: state.folderChildrens,
-    folderChildrenRaw: state.folderChildrenRaw,
-  }),
-  migrate: (persisted) => ({
-    ...(persisted as PersistedBookmarkState),
-    folderChildrens: [],
-    folderChildrenRaw: [],
-  }),
-};
-
+let generation = 0;
 export const bookmarkStore = createStore<BookmarkState>()(
   persist(
     syncTabs(
       (set, get) => ({
+        tree: [],
         folders: [],
-        fetchFolders: async () => {
-          const bookmarksTree = await getBookmarksTree();
-
-          const folders =
-            bookmarksTree.map((folder) => {
-              return {
-                id: folder.id,
-                title: folder.title,
-                children:
-                  folder.children?.map((child) => ({ id: child.id, title: child.title, index: child.index! })) ?? [],
-              };
-            }) ?? [];
-
-          set({ folders });
-
-          if (!get().selectedFolder && folders.length && folders[0].children.length) {
-            const { id, title } = folders[0].children[0];
-            get().setSelectedFolder({id, title});
-          }
-        },
         selectedFolder: null,
-        setSelectedFolder: async (folder) => {
-          if (!folder) {
-            set({ selectedFolder: null });
-            return;
-          }
-          set({ selectedFolder: folder });
-        },
-        fetchFolderChildrens: async () => {
-          const [folder] = await getSubTree(bookmarkStore.getState().selectedFolder?.id ?? '');
-
-          const children = folder.children || [];
-
-          const rootCard: FolderChildren = {
-            id: folder.id,
-            title: 'Default',
-            children: [],
-            syncing: false,
-          };
-
-          const mappedSubTree = children.reduce<FolderChildren[]>(
-            (acc, child) => {
-              const isFolder = !!child.children;
-
-              if (isFolder) {
-                acc.push(child);
-              } else {
-                acc[0].children?.push(child);
-              }
-
-              return acc;
-            },
-            [rootCard],
-          );
-
-          set({ folderChildrens: mappedSubTree, folderChildrenRaw: children });
-        },
+        breadcrumbs: [],
         folderChildrens: [],
         folderChildrenRaw: [],
-        rootParentsIds: [],
+        isLoading: false,
+        isMoving: false,
+        error: null,
+        fetchFolders: async () => {
+          const request = ++generation;
+          set({ isLoading: true });
+          try {
+            const tree = await getBookmarksTree();
+            if (request !== generation) return;
+            const folders = tree.filter(isFolder).map((root) => ({
+              id: root.id,
+              title: root.title,
+              children: (root.children ?? []).filter(isFolder).map((node, index) => ({
+                id: node.id,
+                title: node.title,
+                index: node.index ?? index,
+              })),
+            }));
+            const previous = get().selectedFolder;
+            const previousNode = previous && findBookmark(tree, previous.id);
+            const fallback = tree[0]?.children?.find(isFolder) ?? tree[0];
+            const selection =
+              previousNode && isFolder(previousNode)
+                ? previous
+                : fallback
+                  ? { id: fallback.id, title: fallback.title }
+                  : null;
+            set({ tree, folders, ...selectedView(tree, selection), isLoading: false, error: null });
+          } catch (error) {
+            if (request !== generation) return;
+            set({ isLoading: false, error: `Could not load bookmarks: ${String(error)}` });
+            throw error;
+          }
+        },
+        fetchFolderChildrens: async () => get().fetchFolders(),
+        setSelectedFolder: async (folder) => {
+          if (folder?.id === get().selectedFolder?.id) return;
+          const node = folder && findBookmark(get().tree, folder.id);
+          if (folder && (!node || !isFolder(node))) return;
+          set(selectedView(get().tree, folder));
+        },
+        moveNode: async (id, parentId, index) => {
+          if (get().isMoving || get().isLoading || get().error) return false;
+          const node = findBookmark(get().tree, id);
+          const parent = findBookmark(get().tree, parentId);
+          if (
+            !node?.parentId ||
+            node.parentId === '0' ||
+            !parent ||
+            !isFolder(parent) ||
+            id === parentId ||
+            (isFolder(node) && !!findBookmark(node.children ?? [], parentId))
+          )
+            return false;
+          const source = findBookmark(get().tree, node.parentId);
+          const oldIndex = source?.children?.findIndex((child) => child.id === id) ?? -1;
+          const slot = index ?? parent.children?.length ?? 0;
+          if (slot < 0 || slot > (parent.children?.length ?? 0)) return false;
+          if (node.parentId === parentId && (slot === oldIndex || slot === oldIndex + 1)) return true;
+          set({ isMoving: true, error: null });
+          let moved = false;
+          try {
+            await moveBookmark(id, { parentId, index: slot });
+            moved = true;
+            await get().fetchFolders();
+            return true;
+          } catch (error) {
+            set({
+              error: moved
+                ? 'Moved, but the view could not be refreshed. Reload bookmarks to continue.'
+                : `Could not move bookmark: ${String(error)}`,
+            });
+            return moved;
+          } finally {
+            set({ isMoving: false });
+          }
+        },
       }),
-      { name: 'bookmark-channel' },
+      {
+        name: 'bookmark-channel',
+        include: ['tree', 'folders', 'selectedFolder', 'breadcrumbs', 'folderChildrens', 'folderChildrenRaw'],
+      },
     ),
-    persistOptions,
+    {
+      name: 'bookmark-storage',
+      version: 3,
+      storage: IS_DEV
+        ? createJSONStorage(() => localStorage)
+        : createJSONStorage(() => ({
+            getItem: async (name) => (await chrome.storage.local.get([name]))[name] ?? null,
+            setItem: async (name, value) => {
+              await chrome.storage.local.set({ [name]: value });
+            },
+            removeItem: async (name) => {
+              await chrome.storage.local.remove(name);
+            },
+          })),
+      partialize: (state) => ({ selectedFolder: state.selectedFolder }),
+      migrate: (state) => ({ selectedFolder: (state as { selectedFolder?: Selection }).selectedFolder ?? null }),
+    },
   ),
 );

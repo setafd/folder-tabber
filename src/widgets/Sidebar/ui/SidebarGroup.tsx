@@ -1,62 +1,49 @@
-import { memo, useMemo } from 'react';
-
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useStore } from 'zustand';
 
 import { FolderCreateItem } from '@features/folder/create';
 
-import { TopLevelFolder, bookmarkStore } from '@entities/bookmark';
-
-import { toContainerId } from '@shared/lib/dnd';
+import { type TopLevelFolder, bookmarkStore, useFolderDrop } from '@entities/bookmark';
 
 import { SidebarItem } from './SidebarItem';
 
 import styles from './Sidebar.module.scss';
 
-const SidebarGroupRaw = ({
+export const SidebarGroup = ({
   parent,
   onChangeFolder,
 }: {
   parent: TopLevelFolder;
   onChangeFolder: (id: string, title: string) => void;
 }) => {
-  const selectedFolderId = useStore(bookmarkStore, (state) => state.selectedFolder?.id);
-
-  const { setNodeRef } = useDroppable({
-    id: toContainerId(parent.id),
-    data: { type: 'container', parentId: parent.id },
-  });
-
-  const itemsIds = useMemo(() => parent.children.map((folder) => folder.id), [parent.children]);
-
+  const selectedId = useStore(bookmarkStore, (s) => s.selectedFolder?.id);
+  const drop = useFolderDrop(parent.id, 'sidebar-root');
   return (
-    <section aria-labelledby={`sidebar-section-${parent.id}`} id={parent.id} className={styles.section}>
+    <section aria-labelledby={`sidebar-section-${parent.id}`} className={styles.section}>
       <h2 id={`sidebar-section-${parent.id}`} className={styles.sectionTitle}>
-        {parent.title}
+        <button
+          ref={drop.setNodeRef}
+          data-drop={drop.intent}
+          title={`Open ${parent.title}`}
+          aria-current={selectedId === parent.id ? 'page' : undefined}
+          onClick={() => onChangeFolder(parent.id, parent.title)}
+        >
+          {parent.title}
+        </button>
       </h2>
-      <SortableContext
-        id={parent.id}
-        items={itemsIds}
-        strategy={verticalListSortingStrategy}
-      >
-        <ul ref={setNodeRef} className={styles.folderList}>
-          {parent.children.map((folder) => (
-            <SidebarItem
-              key={folder.id}
-              folder={folder}
-              parentId={parent.id}
-              isSelected={folder.id === selectedFolderId}
-              onChangeFolder={onChangeFolder}
-            />
-          ))}
-          <li>
-            <FolderCreateItem buttonClassName={styles.folderItem} parentId={parent.id} />
-          </li>
-        </ul>
-      </SortableContext>
+      <ul className={styles.folderList}>
+        {parent.children.map((folder) => (
+          <SidebarItem
+            key={folder.id}
+            folder={folder}
+            parentId={parent.id}
+            isSelected={folder.id === selectedId}
+            onChangeFolder={onChangeFolder}
+          />
+        ))}
+        <li className={styles.folderWrapper}>
+          <FolderCreateItem buttonClassName={styles.folderItem} parentId={parent.id} />
+        </li>
+      </ul>
     </section>
   );
 };
-
-export const SidebarGroup = memo(SidebarGroupRaw);

@@ -7,7 +7,6 @@ type MockRuntime = {
 export const mockRuntime: MockRuntime = {
   lastError: undefined,
   getURL: () => {
-    // This service ignores path params so can return google icon in any case
     return 'https://icon.horse/icon/google.com';
   },
   getManifest: () => {

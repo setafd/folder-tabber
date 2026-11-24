@@ -34,8 +34,14 @@ export const FolderEditItemWrapper: React.FC<FolderEditItemProps> = ({ id, title
     <>
       {isInput ? (
         <form ref={ref} className={styles.createInputContainer} onSubmit={onSubmit}>
-          <input autoFocus className={styles.createInput} onKeyDown={onKeyDown} {...register('title')} />
-          <Button variant="icon" type="submit" className={styles.submitButton}>
+          <input
+            aria-label="Rename folder"
+            autoFocus
+            className={styles.createInput}
+            onKeyDown={onKeyDown}
+            {...register('title')}
+          />
+          <Button aria-label="Save folder" variant="icon" type="submit" className={styles.submitButton}>
             <CheckIcon size={20} />
           </Button>
         </form>
