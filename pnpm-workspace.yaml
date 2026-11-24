@@ -1,0 +1,7 @@
+peerDependencyRules:
+  allowedVersions:
+    "tsconfck>typescript": "6"
+
+allowBuilds:
+  esbuild: true
+  "@parcel/watcher": false
