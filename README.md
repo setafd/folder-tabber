@@ -1,44 +1,51 @@
-# 📁 FolderTabber – Chrome Extension
-This Chrome extension replaces the default New Tab page with a custom one that visually organizes your bookmarks by their folder structure. It offers a quick, contextual way to access your saved links—right where you'd expect them.
+# FolderTabber
 
-## 🚀 Features
+A Chromium extension that replaces the New Tab page with a folder-based view of
+your existing bookmarks. Built with React, TypeScript and Vite, using Manifest V3.
 
-- **📂 Bookmark Grouping**  
-  Automatically organizes bookmarks into groups based on their folder hierarchy.
+## Features
 
-- **⚡ Quick Access**  
-  Instantly access bookmarks from their respective folders directly on the New Tab page.
+- Browse bookmark folders through the sidebar and breadcrumbs.
+- View nested folders in an adaptive masonry layout. Large cards can span two
+  columns; expanding a nested folder keeps cards in their existing columns.
+- Create, rename, edit and delete folders and bookmarks.
+- Move and reorder items with drag and drop across the grid, sidebar and breadcrumbs.
+- Open bookmarks in tab groups named after the currently selected folder.
+- Use a collapsible sidebar on narrow windows.
 
-- **🧠 Contextual Opening**  
-  When clicked, bookmarks open in a Chrome tab group named after their parent folder, preserving context.
+Changes are written directly to the browser's bookmarks. The selected folder is
+saved in `chrome.storage.local`; bookmark data is loaded from Chrome when the
+extension starts.
 
-## ✅ Requirements
-* A Chromium-based browser
-* Support for the chrome.tabGroups API
+## Install a release
 
-## 🔧 Installation
+Requires a Chromium-based browser with the `bookmarks`, `tabGroups` and other
+extension APIs declared in [the manifest](public/manifest.json).
 
-You have two options to install the extension:
+1. Download the ZIP from [Releases](https://github.com/setafd/folder-tabber/releases)
+   and extract it to a folder you will keep on disk.
+2. Open `chrome://extensions/` and enable **Developer mode**.
+3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
+4. Open a new tab.
 
-### 1️⃣ Use Pre-built `.crx` File
+Releases also include a signed CRX for browsers and environments that support
+[local CRX installation](https://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions).
 
-- Download the latest `.crx` file from the [Releases](https://github.com/your-username/your-repo/releases) section.
-- Open your browser's Extensions page: `chrome://extensions/`
-- Drag and drop the downloaded `.crx` file into the Extensions page.
-- Confirm the installation when prompted.
+## Build from source
 
-### 2️⃣ Build It Yourself
+Use Node.js 24, matching CI, and pnpm 12.23.0, as pinned in `package.json`.
+See the [pnpm installation guide](https://pnpm.io/installation) if pnpm is not installed.
 
-1. Clone or download this repository.
-2. In the project folder, run:
-```bash
-npm install
-npm run build
+```sh
+git clone https://github.com/setafd/folder-tabber.git
+cd folder-tabber
+pnpm install --frozen-lockfile
+pnpm build
 ```
-> Requires Node.js to be installed.
 
-3. Open the Extensions page in your browser: `chrome://extensions/`
-4. Enable Developer mode (toggle switch in the top right corner).
-5. Click "Load unpacked" and select the build folder from the project directory.
+Load the generated `build/` directory through **Load unpacked** on
+`chrome://extensions/`. After rebuilding, reload the extension on that page and
+open a new tab to use the updated build.
 
->💡 Optionally, you can also pack the extension into a .crx file using Chrome's "Pack extension" feature on the Extensions page.
+Installing dependencies runs `prepare`, which configures Git to use `.githooks/`.
+The pre-commit hook runs ESLint and Steiger and blocks the commit if either fails.
