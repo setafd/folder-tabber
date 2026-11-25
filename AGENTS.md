@@ -20,8 +20,3 @@ If `.codegraph/` exists at the repository root, use `codegraph_explore` before s
 - Preserve the platform adapters' bookmark move index semantics. Check reordering, cross-folder moves, and nested folders when changing drag and drop or masonry layout.
 - Custom Pages providers return validated JSON and page-scoped CSS. Keep the mock provider in its separate repository. Preserve the extension CSP and hold saved tokens separately from configuration and snapshots, bound to the complete normalized provider address.
 - Keep source code free of comments. Use clear names and put longer usage notes in the README.
-
-## Release and Git
-
-- Keep the versions in `package.json` and `public/manifest.json` synchronized when preparing a release. The tag workflow publishes Chromium CRX and ZIP files and a Mozilla-signed Firefox XPI.
-- Preserve unrelated working tree changes. Keep commits focused and create tags or push only when requested.
