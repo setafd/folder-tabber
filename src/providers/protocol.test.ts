@@ -29,6 +29,20 @@ describe('provider boundary', () => {
         .success,
     ).toBe(false);
   });
+  it('keeps recognized page icons and falls back for missing or unsupported icons', () => {
+    const manifest = manifestSchema.parse({
+      protocolVersion: 1,
+      name: 'Workspace',
+      pages: [
+        { id: 'health', title: 'Service Health', icon: 'activity' },
+        { id: 'jira', title: 'Jira Queue', icon: 'jira' },
+        { id: 'notes', title: 'Notes' },
+        { id: 'future', title: 'Future Dashboard', icon: 'new-icon' },
+        { id: 'external', title: 'External Dashboard', icon: 'https://example.com/icon.svg' },
+      ],
+    });
+    expect(manifest.pages.map((entry) => entry.icon)).toEqual(['activity', 'jira', undefined, undefined, undefined]);
+  });
   it('bounds input complexity before recursive schema parsing', () => {
     let nested: unknown = null;
     for (let i = 0; i < 45; i++) nested = { child: nested };

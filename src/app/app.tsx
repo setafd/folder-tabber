@@ -4,6 +4,7 @@ import { useStore } from 'zustand';
 
 import { platform } from '@/platform';
 import { PageLoading, WorkspaceLoading } from '@/providers/page-frame';
+import { ProviderPageIcon } from '@/providers/ProviderPageIcon';
 import { type PageSelection, loadSources, sourceStore, subscribeSources } from '@/providers/store';
 
 import { BookmarkWorkspace } from './BookmarkWorkspace';
@@ -84,10 +85,12 @@ export const App = () => {
                   {pages.map((page) => (
                     <button
                       key={page.id}
+                      className="workspace-page"
                       aria-current={source?.id === item.id && selection?.pageId === page.id ? 'page' : undefined}
                       onClick={() => navigate({ sourceId: item.id, pageId: page.id })}
                     >
-                      {page.title}
+                      <ProviderPageIcon name={page.icon} />
+                      <span>{page.title}</span>
                     </button>
                   ))}
                 </div>

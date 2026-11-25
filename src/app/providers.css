@@ -47,6 +47,20 @@
   background: var(--selection-color);
   box-shadow: inset 2px 0 var(--accent-color);
 }
+.workspace-pages .workspace-page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.workspace-page > span {
+  min-width: 0;
+}
+.workspace-page-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--foreground-light-color);
+}
 .workspace-pages-heading {
   position: sticky;
   top: 0;

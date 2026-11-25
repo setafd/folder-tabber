@@ -151,7 +151,13 @@ export const manifestSchema = z
     dataTypes: z.array(z.enum(dataTypes)).max(dataTypes.length).default(['authenticationInfo', 'websiteContent']),
     name: z.string().min(1).max(100),
     pages: z
-      .array(z.object({ id: identifier, title: z.string().min(1).max(200) }).strict())
+      .array(
+        z.strictObject({
+          id: identifier,
+          title: z.string().min(1).max(200),
+          icon: z.enum(['activity', 'chart', 'jira', 'list', 'page']).optional().catch(undefined),
+        }),
+      )
       .max(100)
       .refine(unique),
   })
