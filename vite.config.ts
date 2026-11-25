@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { type Plugin, defineConfig } from 'vite';
 
 import baseManifest from './public/manifest.json';
+import { dataTypes } from './src/providers/data-types';
 
 export default defineConfig(({ mode }) => {
   const firefox = mode === 'firefox';
@@ -15,7 +16,7 @@ export default defineConfig(({ mode }) => {
             gecko: {
               id: 'folder-tabber@setafd.github.io',
               strict_min_version: '140.0',
-              data_collection_permissions: { required: ['none'] },
+              data_collection_permissions: { required: ['none'], optional: [...dataTypes] },
             },
           },
         }
@@ -28,7 +29,7 @@ export default defineConfig(({ mode }) => {
     },
   };
   return {
-    publicDir: false,
+    publicDir: 'public/assets',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     plugins: [react(), extensionManifest],
     build: {

@@ -46,6 +46,7 @@ const GridContent = () => {
   const { dragging } = useContext(DropFeedbackContext);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [showAll, setShowAll] = useState<ReadonlySet<string>>(() => new Set());
+  const [expansion, setExpansion] = useState(0);
   const cards = useMemo(
     () => folders.map((folder) => folderCardLayout(folder, expanded, showAll.has(folder.id))),
     [folders, expanded, showAll],
@@ -55,15 +56,19 @@ const GridContent = () => {
   const { setOpen: openEditModal } = useEditBookmarkState();
   const onToggle = useCallback(
     (id: string) => {
-      if (!dragging) setExpanded((previous) => toggleSet(previous, id));
+      if (dragging || pending) return;
+      setExpanded((previous) => toggleSet(previous, id));
+      setExpansion((previous) => previous + 1);
     },
-    [dragging],
+    [dragging, pending],
   );
   const onShowAll = useCallback(
     (id: string) => {
-      if (!dragging) setShowAll((previous) => toggleSet(previous, id));
+      if (dragging || pending) return;
+      setShowAll((previous) => toggleSet(previous, id));
+      setExpansion((previous) => previous + 1);
     },
-    [dragging],
+    [dragging, pending],
   );
   const onClickBookmark = useCallback<BookmarkItemProps['onClick']>(
     (event) => {
@@ -110,7 +115,7 @@ const GridContent = () => {
           </Button>
         </div>
       </header>
-      <div className={styles.gridWrapper} aria-busy={pending}>
+      <div className={`${styles.gridWrapper} workspace-content-enter`} aria-busy={pending}>
         {isEmpty && (
           <div className={styles.empty}>
             <p>This folder is empty.</p>
@@ -124,7 +129,13 @@ const GridContent = () => {
           style={{ height: containerHeight, visibility: ready ? 'visible' : 'hidden' }}
         >
           {folders.map((folder) => (
-            <MasonryItem key={folder.id} id={folder.id} position={positions.get(folder.id)}>
+            <MasonryItem
+              key={folder.id}
+              id={folder.id}
+              position={positions.get(folder.id)}
+              expansion={expansion}
+              frozen={dragging || pending}
+            >
               <GridFolder
                 folder={folder}
                 isRoot={folder.id === folderId}

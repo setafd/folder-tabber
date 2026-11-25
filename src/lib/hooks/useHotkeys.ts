@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 
 const shouldFireEvent = (event: KeyboardEvent, tagsToIgnore: string[], triggerOnContentEditable = false) => {
-  if (event.target instanceof HTMLElement) {
+  const target = event.composedPath().find((node) => node instanceof HTMLElement) ?? event.target;
+  if (target instanceof HTMLElement) {
     if (triggerOnContentEditable) {
-      return !tagsToIgnore.includes(event.target.tagName);
+      return !tagsToIgnore.includes(target.tagName);
     }
 
-    return !event.target.isContentEditable && !tagsToIgnore.includes(event.target.tagName);
+    return !target.isContentEditable && !tagsToIgnore.includes(target.tagName);
   }
 
   return true;

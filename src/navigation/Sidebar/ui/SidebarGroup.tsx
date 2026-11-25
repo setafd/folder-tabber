@@ -9,12 +9,14 @@ import styles from './Sidebar.module.scss';
 
 export const SidebarGroup = ({
   parent,
+  active,
   onChangeFolder,
 }: {
   parent: TopLevelFolder;
+  active: boolean;
   onChangeFolder: (id: string, title: string) => void;
 }) => {
-  const selectedId = useStore(bookmarkStore, (s) => s.selectedFolder?.id);
+  const selectedId = useStore(bookmarkStore, (s) => (active ? s.selectedFolder?.id : undefined));
   const drop = useFolderDrop(parent.id, 'sidebar-root');
   return (
     <section aria-labelledby={`sidebar-section-${parent.id}`} className={styles.section}>

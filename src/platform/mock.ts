@@ -124,13 +124,25 @@ export function createMockPlatform(): BrowserPlatform {
     },
     storage: {
       getItem: async (name) => localStorage.getItem(name),
+      getItems: async (names) => Object.fromEntries(names.map((name) => [name, localStorage.getItem(name)])),
       setItem: async (name, value) => {
         localStorage.setItem(name, value);
+      },
+      setItems: async (items) => {
+        for (const [name, value] of Object.entries(items)) localStorage.setItem(name, value);
       },
       removeItem: async (name) => {
         localStorage.removeItem(name);
       },
+      subscribe: (listener) => {
+        const changed = (event: StorageEvent) => {
+          if (event.key) listener(event.key);
+        };
+        window.addEventListener('storage', changed);
+        return () => window.removeEventListener('storage', changed);
+      },
     },
+    permissions: { contains: async () => true, request: async () => true },
     tabs: { open: async () => {} },
     favicons: { fallback, getUrl: () => fallback, subscribe: () => () => {} },
   };

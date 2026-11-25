@@ -13,8 +13,15 @@ export type BrowserPlatform = {
   };
   storage: {
     getItem: (name: string) => Promise<string | null>;
+    getItems: (names: string[]) => Promise<Record<string, string | null>>;
     setItem: (name: string, value: string) => Promise<void>;
+    setItems: (items: Record<string, string>) => Promise<void>;
     removeItem: (name: string) => Promise<void>;
+    subscribe: (listener: (key: string) => void) => () => void;
+  };
+  permissions: {
+    contains: (origin: string, dataTypes?: string[]) => Promise<boolean>;
+    request: (origin: string, dataTypes?: string[]) => Promise<boolean>;
   };
   tabs: {
     open: (url: string, groupTitle: string, inCurrent: boolean) => Promise<void>;

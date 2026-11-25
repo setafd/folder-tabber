@@ -14,7 +14,7 @@ import { SidebarGroup } from './SidebarGroup';
 
 import styles from './Sidebar.module.scss';
 
-export const Sidebar = () => {
+export const Sidebar = ({ active = true, onSelect }: { active?: boolean; onSelect?: () => void }) => {
   const folders = useStore(
     bookmarkStore,
     useShallow((state) => state.folders),
@@ -24,8 +24,9 @@ export const Sidebar = () => {
   const onChangeFolder = useCallback(
     (id: string, title: string) => {
       setSelectedFolder({ id, title });
+      onSelect?.();
     },
-    [setSelectedFolder],
+    [setSelectedFolder, onSelect],
   );
 
   const flatFolders = useMemo(() => folders.flatMap((f) => f.children), [folders]);
@@ -46,7 +47,7 @@ export const Sidebar = () => {
   return (
     <nav aria-label="Navigation" className={styles.navigation}>
       {folders.map((parent) => (
-        <SidebarGroup key={parent.id} parent={parent} onChangeFolder={onChangeFolder} />
+        <SidebarGroup key={parent.id} parent={parent} active={active} onChangeFolder={onChangeFolder} />
       ))}
       <FolderDeleteConfirmModal />
     </nav>

@@ -2,8 +2,15 @@
   "manifest_version": 3,
   "name": "FolderTabber",
   "version": "2.1.0",
+  "icons": {
+    "16": "icons/folder-tabber-16.png",
+    "32": "icons/folder-tabber-32.png",
+    "48": "icons/folder-tabber-48.png",
+    "128": "icons/folder-tabber-128.png"
+  },
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["bookmarks", "favicon", "tabs", "tabGroups", "storage", "favicon"]
+  "permissions": ["bookmarks", "favicon", "tabs", "tabGroups", "storage", "favicon"],
+  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*", "http://[::1]/*"]
 }

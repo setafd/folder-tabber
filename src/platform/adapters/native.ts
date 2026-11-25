@@ -3,9 +3,16 @@ import type { BookmarkKind, BookmarkNode } from '@/bookmarks/model/types';
 import fallback from '../assets/bookmark.svg';
 import type { BrowserPlatform } from '../contracts';
 
-export type NativeBrowser = Pick<typeof chrome, 'bookmarks' | 'tabs' | 'tabGroups' | 'storage' | 'runtime'>;
+export type NativeBrowser = Pick<
+  typeof chrome,
+  'bookmarks' | 'tabs' | 'tabGroups' | 'storage' | 'runtime' | 'permissions'
+>;
 type NativeBookmark = chrome.bookmarks.BookmarkTreeNode & { type?: BookmarkKind };
-type NativeOptions = { moveIndex: 'before-removal' | 'after-removal'; favicons: 'chromium' | 'tabs' };
+type NativeOptions = {
+  moveIndex: 'before-removal' | 'after-removal';
+  favicons: 'chromium' | 'tabs';
+  dataConsent?: boolean;
+};
 
 function normalizeBookmark(node: NativeBookmark, root = false): BookmarkNode {
   const type = node.type ?? (typeof node.url === 'string' ? 'bookmark' : 'folder');
@@ -92,8 +99,26 @@ export function createNativePlatform(api: NativeBrowser, options: NativeOptions)
         const value = (await api.storage.local.get([name]))[name];
         return typeof value === 'string' ? value : null;
       },
+      getItems: async (names) => {
+        const values = await api.storage.local.get(names);
+        return Object.fromEntries(names.map((name) => [name, typeof values[name] === 'string' ? values[name] : null]));
+      },
       setItem: (name, value) => api.storage.local.set({ [name]: value }),
+      setItems: (items) => api.storage.local.set(items),
       removeItem: (name) => api.storage.local.remove(name),
+      subscribe: (listener) => {
+        const changed = (changes: Record<string, unknown>, area: string) => {
+          if (area === 'local') Object.keys(changes).forEach((key) => listener(key));
+        };
+        api.storage.onChanged?.addListener(changed);
+        return () => api.storage.onChanged?.removeListener(changed);
+      },
+    },
+    permissions: {
+      contains: (origin, dataTypes = ['authenticationInfo']) =>
+        api.permissions.contains({ origins: [origin], ...(options.dataConsent ? { data_collection: dataTypes } : {}) }),
+      request: (origin, dataTypes = ['authenticationInfo']) =>
+        api.permissions.request({ origins: [origin], ...(options.dataConsent ? { data_collection: dataTypes } : {}) }),
     },
     tabs: {
       open: async (url, groupTitle, inCurrent) => {

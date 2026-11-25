@@ -47,7 +47,9 @@ const fixture = () => {
       onUpdated: event(),
     },
     tabGroups: { query: vi.fn(async () => [] as { id: number }[]), update: vi.fn(async () => ({})) },
+    permissions: { contains: vi.fn(async () => true), request: vi.fn(async () => true) },
     storage: {
+      onChanged: event(),
       local: {
         get: vi.fn(async () => ({ selection: 'saved' })),
         set: vi.fn(async () => {}),
@@ -184,3 +186,40 @@ describe('browser favicon sources', () => {
     expect(raw.tabs.onUpdated.removeListener).toHaveBeenCalledOnce();
   });
 });
+
+for (const [browser, factory] of [
+  ['Chromium', createChromiumPlatform],
+  ['Firefox', createFirefoxPlatform],
+] as const) {
+  describe(`${browser} source permissions`, () => {
+    it('requests only the selected origin and includes Firefox data consent', async () => {
+      const { raw, api } = fixture();
+      const platform = factory(api);
+      await platform.permissions.request('https://example.com/*', ['authenticationInfo', 'websiteContent']);
+      await platform.permissions.contains('https://example.com/*', ['authenticationInfo']);
+      expect(raw.permissions.request).toHaveBeenCalledWith({
+        origins: ['https://example.com/*'],
+        ...(browser === 'Firefox' ? { data_collection: ['authenticationInfo', 'websiteContent'] } : {}),
+      });
+      expect(raw.permissions.contains).toHaveBeenCalledWith({
+        origins: ['https://example.com/*'],
+        ...(browser === 'Firefox' ? { data_collection: ['authenticationInfo'] } : {}),
+      });
+    });
+    it('subscribes to local changes without forwarding stored credentials', () => {
+      const { raw, api } = fixture();
+      const callback = vi.fn();
+      const unsubscribe = factory(api).storage.subscribe(callback);
+      const changed = raw.storage.onChanged.addListener.mock.calls[0][0] as (
+        changes: Record<string, unknown>,
+        area: string,
+      ) => void;
+      changed({ key: { newValue: 'secret' } }, 'sync');
+      expect(callback).not.toHaveBeenCalled();
+      changed({ key: { newValue: 'secret' } }, 'local');
+      expect(callback).toHaveBeenCalledWith('key');
+      unsubscribe();
+      expect(raw.storage.onChanged.removeListener).toHaveBeenCalledWith(changed);
+    });
+  });
+}
