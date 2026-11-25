@@ -18,6 +18,26 @@
 .backdrop {
   display: none;
 }
+@media (width > 900px) {
+  .layout {
+    --workspace-inset: 16px;
+    gap: 10px;
+    padding: var(--workspace-inset);
+  }
+  .sidebar,
+  .content {
+    border: 1px solid var(--workspace-frame);
+    border-radius: 20px;
+    box-shadow: var(--workspace-shadow);
+  }
+  .sidebar {
+    background: var(--workspace-sidebar);
+    backdrop-filter: blur(24px);
+  }
+  .content {
+    background: var(--workspace-panel);
+  }
+}
 @media (max-width: 900px) {
   .menuButton {
     display: block;
@@ -37,6 +57,7 @@
     z-index: 31;
     padding-top: 64px;
     background: var(--background-color);
+    border-right: 1px solid var(--border-color);
     visibility: hidden;
     transform: translateX(-100%);
     pointer-events: none;

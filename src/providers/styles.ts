@@ -45,7 +45,7 @@ h2.ft-text { font-size: 18px; font-weight: 600; }
 .ft-metric, .ft-status { padding: 20px; background: var(--surface-color, #fafafa); border: 1px solid var(--border-color, #ddd); border-radius: var(--control-radius); display: flex; flex-direction: column; gap: 9px; }
 .ft-label { font-size: 13px; }
 .ft-value { font-size: 26px; font-weight: 600; overflow-wrap: anywhere; }
-[data-tone='success'] .ft-value { color: #278454; } [data-tone='warning'] .ft-value { color: #ac7516; } [data-tone='danger'] .ft-value { color: #c94242; }
+[data-tone='success'] .ft-value { color: var(--success-color, #278454); } [data-tone='warning'] .ft-value { color: var(--warning-color, #ac7516); } [data-tone='danger'] .ft-value { color: var(--danger-color, #c94242); }
 .ft-table-wrap { overflow: auto; border: 1px solid var(--border-color, #ddd); border-radius: var(--control-radius); }
 .ft-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 14px; text-align: left; }
 .ft-table th { font-size: 12px; font-weight: 600; color: var(--foreground-light-color, #666); background: var(--surface-color, #fafafa); }
@@ -69,7 +69,7 @@ h2.ft-text { font-size: 18px; font-weight: 600; }
 .ft-button, .ft-input { transition: border-color 140ms ease, background-color 140ms ease, opacity 140ms ease; }
 @media (prefers-reduced-motion: reduce) { .ft-button, .ft-input { transition: none; } }
 textarea.ft-input { resize: vertical; min-height: 90px; }
-.ft-error { color: #c94242; font-size: 13px; }
+.ft-error { color: var(--danger-color, #c94242); font-size: 13px; }
 .ft-link { color: var(--accent-color, #1971c2); overflow-wrap: anywhere; }
 :focus-visible { outline: 2px solid var(--accent-color, #1971c2); outline-offset: 3px; }
 @media (max-width: 700px) { .ft-grid { grid-template-columns: 1fr; } }

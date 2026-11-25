@@ -2,9 +2,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-color);
-  background: var(--background-color);
   overflow: hidden;
+  border-radius: inherit;
 }
 .workspace-folders {
   flex: 1;
@@ -14,7 +13,6 @@
 .workspace-folders > nav {
   height: auto;
   min-height: 100%;
-  border-right: 0;
   overflow: visible;
 }
 .workspace-pages {
@@ -25,7 +23,6 @@
   flex-shrink: 0;
   max-height: 45%;
   overflow: hidden;
-  background: var(--background-color);
   border-top: 1px solid var(--border-color);
 }
 .workspace-page-list {
@@ -39,7 +36,7 @@
   text-align: left;
   min-height: 34px;
   padding: 8px 10px;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -48,22 +45,20 @@
 }
 .workspace-pages button[aria-current='page'] {
   background: var(--selection-color);
+  box-shadow: inset 2px 0 var(--accent-color);
 }
 .workspace-pages-heading {
   position: sticky;
   top: 0;
   z-index: 1;
   flex-shrink: 0;
-  background: var(--background-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px 6px;
-  color: var(--foreground-light-color);
-  font-size: 11px;
+  color: var(--foreground-color);
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 .workspace-pages-heading button {
   width: 28px;
@@ -311,7 +306,7 @@
   transform-origin: center;
 }
 .provider-stage {
-  min-height: max(280px, calc(100dvh - 160px));
+  min-height: max(280px, calc(100dvh - 160px - 2 * var(--workspace-inset, 0px)));
 }
 @media (prefers-reduced-motion: no-preference) {
   .workspace-content-enter,

@@ -8,6 +8,7 @@ import { BookmarkUpdateModal, useEditBookmarkState } from '@/bookmarks/forms/edi
 import { DropFeedbackContext } from '@/lib/dnd';
 import { openTab } from '@/tabs';
 import { Button } from '@/ui/Button';
+import { PlusIcon } from '@/ui/icons';
 
 import { folderCardLayout } from './GridContent.cards';
 import { useBookmarks } from './GridContent.lib';
@@ -108,9 +109,11 @@ const GridContent = () => {
             disabled={!folderId || pending}
             onClick={() => onCreateBookmark(folderId, 'folder')}
           >
+            <PlusIcon size={15} aria-hidden="true" />
             New folder
           </Button>
           <Button disabled={!folderId || pending} onClick={() => onCreateBookmark(folderId)}>
+            <PlusIcon size={15} aria-hidden="true" />
             Add bookmark
           </Button>
         </div>

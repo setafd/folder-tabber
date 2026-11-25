@@ -16,7 +16,7 @@ body {
 .dnd-overlay {
   padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;
-  background-color: var(--background-color);
+  background-color: var(--surface-color);
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
   font-size: 0.875rem;
@@ -43,29 +43,62 @@ ol {
 }
 
 :root {
-  --background-color: #f0f0f0;
-  --foreground-color: #262626;
-
-  --foreground-light-color: #666666;
-  --border-color: #dfdfdf;
-
-  --accent-color: #1971c2;
-  --danger-color: #e03131;
-  --scrollbar-thumb: #9aa1ab;
-  --scrollbar-thumb-hover: #7a8491;
-  --scrollbar-thumb-active: #596574;
+  color-scheme: light dark;
+  --background-color: #eeede5;
+  --foreground-color: #292b28;
+  --foreground-light-color: #535e56;
+  --border-color: #d5d8ce;
+  --surface-color: #f8f9f4;
+  --hover-color: #e8ebe3;
+  --selection-color: #dce3d8;
+  --folder-header-color: #eeefe9;
+  --folder-header-border: #d8ddd4;
+  --accent-color: #244f44;
+  --accent-foreground-color: #fafcf7;
+  --accent-hover-color: #346556;
+  --danger-color: #a9313a;
+  --danger-button-color: #a9313a;
+  --success-color: #2c694e;
+  --warning-color: #875a16;
+  --scrollbar-thumb: #929b8f;
+  --scrollbar-thumb-hover: #747f72;
+  --scrollbar-thumb-active: #576357;
+  --wallpaper-wash: linear-gradient(125deg, rgb(246 239 222 / 23%), rgb(213 226 213 / 66%));
+  --workspace-panel: rgb(246 246 240 / 79%);
+  --workspace-sidebar: rgb(246 244 235 / 73%);
+  --workspace-frame: rgb(253 253 247 / 62%);
+  --workspace-shadow: 0 14px 36px rgb(49 46 29 / 11%);
+  --card-shadow: 0 3px 8px rgb(58 68 49 / 7%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background-color: #242424;
-    --foreground-color: #fbfbfb;
-
-    --foreground-light-color: #d9d9d9;
-    --border-color: #404040;
-    --scrollbar-thumb: #636d7a;
-    --scrollbar-thumb-hover: #8893a1;
-    --scrollbar-thumb-active: #aab2bc;
+    --background-color: #1a1a1c;
+    --foreground-color: #eeece9;
+    --foreground-light-color: #b8b7b3;
+    --border-color: #424244;
+    --surface-color: #272729;
+    --hover-color: #353537;
+    --selection-color: #353739;
+    --folder-header-color: #2f2f31;
+    --folder-header-border: transparent;
+    --accent-color: #bdd4ca;
+    --accent-foreground-color: #1a332a;
+    --accent-hover-color: #d0e1d9;
+    --danger-color: #fa9b9d;
+    --danger-button-color: #9e3540;
+    --success-color: #91d4ae;
+    --warning-color: #efc57d;
+    --scrollbar-thumb: #747477;
+    --scrollbar-thumb-hover: #939396;
+    --scrollbar-thumb-active: #b5b5b9;
+    --wallpaper-wash: linear-gradient(117deg, rgb(38 30 29 / 15%), rgb(21 22 25 / 64%) 55%, rgb(17 20 24 / 40%));
+    --wallpaper-filter: saturate(0.24) brightness(0.58);
+    --workspace-panel: rgb(26 26 28 / 93%);
+    --workspace-sidebar: rgb(26 26 28 / 69%);
+    --workspace-frame: rgb(238 235 228 / 16%);
+    --workspace-shadow: 0 14px 36px rgb(0 0 0 / 30%);
+    --card-shadow: 0 3px 8px rgb(0 0 0 / 16%);
   }
 }
 
@@ -87,6 +120,22 @@ body {
   font-size: 16px;
 }
 
+@media (width > 900px) {
+  body {
+    isolation: isolate;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--wallpaper-wash), url('/wallpapers/mermaid.webp') center 52% / cover;
+    filter: var(--wallpaper-filter, none);
+  }
+}
+
 button,
 input,
 textarea,
@@ -99,14 +148,6 @@ select {
   background-color: var(--background-color);
 }
 
-:root {
-  --surface-color: #fafafa;
-  --hover-color: #e8e8e8;
-  --selection-color: #dceaf6;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --surface-color: #292929; --hover-color: #343434; --selection-color: #193b56; }
-}
 :focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
 .drag-handle { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 24px; height: 30px; color: var(--foreground-light-color); cursor: grab; touch-action: none; }
 .drag-handle:active { cursor: grabbing; }

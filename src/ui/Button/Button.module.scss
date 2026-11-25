@@ -3,7 +3,7 @@
   border: none;
   cursor: pointer;
 
-  border-radius: 0.25rem;
+  border-radius: 8px;
   transition:
     background-color 140ms ease,
     color 140ms ease,
@@ -15,29 +15,30 @@
 }
 
 .default {
-  background-color: var(--background-color);
+  background-color: var(--surface-color);
 
   border: 1px solid var(--border-color);
 
-  &:hover {
-    filter: invert(0.1);
+  &:hover:enabled {
+    background-color: var(--hover-color);
   }
 }
 
 .primary {
   background-color: var(--accent-color);
-  color: white;
+  color: var(--accent-foreground-color);
 
-  &:hover {
-    filter: brightness(1.2) saturate(1.25);
+  &:hover:enabled {
+    background-color: var(--accent-hover-color);
   }
 }
 
 .danger {
-  background-color: var(--danger-color);
+  background-color: var(--danger-button-color);
+  color: white;
 
-  &:hover {
-    filter: brightness(1.2) saturate(1.25);
+  &:hover:enabled {
+    filter: brightness(1.12);
   }
 }
 
@@ -47,8 +48,8 @@
 
   height: 100%;
 
-  &:hover {
-    filter: invert(0.1);
+  &:hover:enabled {
+    background-color: var(--hover-color);
   }
 }
 

@@ -2,8 +2,6 @@
   height: 100%;
   overflow: auto;
   padding: 18px 10px;
-  border-right: 1px solid var(--border-color);
-  background: var(--background-color);
 }
 .section {
   margin-bottom: 24px;
@@ -41,7 +39,7 @@
   align-items: center;
   position: relative;
   height: 36px;
-  border-radius: 5px;
+  border-radius: 8px;
   min-width: 0;
   &:hover,
   &:focus-within {
@@ -49,6 +47,7 @@
   }
   &[data-active='true'] {
     background: var(--selection-color);
+    box-shadow: inset 2px 0 var(--accent-color);
   }
   &[data-drop='inside'] {
     outline: 2px solid var(--accent-color);

@@ -1,0 +1,6 @@
+Mermaid by Máirín Duffy, from Fedora Workstation Backgrounds.
+Source: https://pagure.io/fedora-design/fedora-workstation-backgrounds
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Resized and re-encoded for FolderTabber. The extension tints the image for each theme.

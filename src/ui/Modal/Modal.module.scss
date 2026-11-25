@@ -1,5 +1,7 @@
 .modal {
-  background-color: var(--background-color);
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 13px;
   margin-top: 5vh;
 
   & :global(.react-responsive-modal-closeButton) {

@@ -6,22 +6,16 @@ const AddBookmarkIcon: React.FC<AddBookmarkIconProps> = ({ size, style, ...other
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.65"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       style={{ width: size, height: size, ...style }}
       {...others}
     >
-      <path
-        d="M20 8h24a4 4 0 0 1 4 4v44l-16-8-16 8V12a4 4 0 0 1 4-4z"
-        fill="#fde047"
-        stroke="#000"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-
-      <g stroke="#000" strokeWidth="2" strokeLinecap="round">
-        <line x1="32" y1="24" x2="32" y2="36" />
-        <line x1="26" y1="30" x2="38" y2="30" />
-      </g>
+      <path d="M18 21l-6-4-6 4V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2zM12 7v6m-3-3h6" />
     </svg>
   );
 };
