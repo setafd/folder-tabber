@@ -168,7 +168,8 @@ export function ProviderScreen({ source, pageId, onManage }: { source: Source; p
       if (mounted.current) setBusy(false);
     }
   };
-  const title = page?.title ?? source.manifest.pages.find((item) => item.id === pageId)?.title ?? pageId;
+  const currentPage = page?.id === pageId ? page : null;
+  const title = currentPage?.title ?? source.manifest.pages.find((item) => item.id === pageId)?.title ?? pageId;
   return (
     <ProviderFrame
       sourceName={source.manifest.name}
@@ -176,8 +177,8 @@ export function ProviderScreen({ source, pageId, onManage }: { source: Source; p
       savedAt={savedAt}
       loading={loading}
       busy={busy}
-      savedCopy={stale && !!page && !loading}
-      previousResults={stale && !!page && !loading && displayedQuery.current !== query}
+      savedCopy={stale && !!currentPage && !loading}
+      previousResults={stale && !!currentPage && !loading && displayedQuery.current !== query}
       error={error}
       message={message}
       onManage={onManage}
@@ -187,22 +188,24 @@ export function ProviderScreen({ source, pageId, onManage }: { source: Source; p
         setMessage('');
       }}
     >
-      {!page &&
+      {!currentPage &&
         (loading ? (
           <PageSkeleton />
         ) : (
           <div className="provider-empty">This page could not be loaded. Check the source and try again.</div>
         ))}
-      {page && (
+      {currentPage && (
         <Renderer
-          page={page}
+          key={`${source.id}/${source.revision}/${pageId}`}
+          page={currentPage}
           localCss={source.localCss[pageId] ?? ''}
           disabled={stale || busy}
+          debouncedQueryDisabled={busy}
           onAction={onAction}
-          onQuery={(input) => {
-            const next = new URLSearchParams(
-              Object.entries(input).map(([key, value]) => [key, String(value ?? '')]),
-            ).toString();
+          onQuery={(input, options) => {
+            const params = new URLSearchParams(options?.preserveQuery ? (query ?? '') : '');
+            for (const [key, value] of Object.entries(input)) params.set(key, String(value ?? ''));
+            const next = params.toString();
             if (next === query) void load();
             else setQuery(next);
           }}

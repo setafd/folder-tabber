@@ -180,3 +180,171 @@ it('keeps the previous results and form draft during a query change', async () =
   expect(controls.getByText('Updated results')).toBeTruthy();
   expect((controls.getByLabelText('Note') as HTMLTextAreaElement).value).toBe('Unsaved draft');
 });
+
+describe('provider search forms', () => {
+  const searchPage = ({ id = 'first', root = 'root', text = 'Results', q = '', automatic = true, searchLast = false } = {}) => {
+    const search = {
+      id: 'service-search',
+      type: 'form',
+      mode: 'query',
+      ...(automatic ? { debounceMs: 300 } : { submitLabel: 'Apply' }),
+      fields: [
+        { name: 'q', label: 'Search', type: 'text', value: q },
+        { name: 'status', label: 'Status', type: 'text', value: 'open' },
+      ],
+    };
+    const results = { id: 'results', type: 'text', text };
+    return pageSchema.parse({
+      id,
+      title: id,
+      content: {
+        id: root,
+        type: 'stack',
+        children: searchLast ? [results, search] : [search, results],
+      },
+    });
+  };
+  const advance = async (milliseconds: number) => {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(milliseconds);
+    });
+  };
+  const queries = () => vi.mocked(providerRequest).mock.calls.map((call) => call[4]?.query);
+  const searchControl = (view: ReturnType<typeof render>) =>
+    content(view).getByRole('textbox', { name: 'Search' }) as HTMLInputElement;
+  const typeSearch = (view: ReturnType<typeof render>, value: string) =>
+    fireEvent.change(searchControl(view), { target: { value } });
+  const openPage = async () => {
+    const view = render(<ProviderScreen source={source} pageId="first" onManage={vi.fn()} />);
+    await act(async () => {});
+    return view;
+  };
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('sends one query 300 ms after the last edit with every field and the current view parameters', async () => {
+    vi.mocked(readLastQuery).mockResolvedValue('view=due&team=infra');
+    vi.mocked(providerRequest).mockResolvedValue(searchPage());
+    const view = await openPage();
+    expect(content(view).queryByRole('button')).toBeNull();
+    await advance(500);
+    expect(queries()).toEqual(['view=due&team=infra']);
+
+    typeSearch(view, 'c');
+    await advance(100);
+    typeSearch(view, 'cv');
+    await advance(100);
+    typeSearch(view, 'cve');
+    await advance(299);
+    expect(queries()).toEqual(['view=due&team=infra']);
+    await advance(1);
+    expect(queries()).toEqual(['view=due&team=infra', 'view=due&team=infra&q=cve&status=open']);
+
+    await advance(500);
+    expect(queries()).toHaveLength(2);
+  });
+
+  it('sends an explicitly empty q when the search is cleared', async () => {
+    vi.mocked(readLastQuery).mockResolvedValue('view=cve&q=apache');
+    vi.mocked(providerRequest)
+      .mockResolvedValueOnce(searchPage({ q: 'apache' }))
+      .mockResolvedValueOnce(searchPage());
+    const view = await openPage();
+    typeSearch(view, '');
+    await advance(300);
+    expect(queries()).toEqual(['view=cve&q=apache', 'view=cve&q=&status=open']);
+  });
+
+  it('keeps typing available during loading and preserves the focused draft and selection after results', async () => {
+    let finish: (value: unknown) => void = () => {};
+    vi.mocked(providerRequest)
+      .mockResolvedValueOnce(searchPage())
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(searchPage({ root: 'updated-layout', text: 'Rearranged results' }));
+    const view = await openPage();
+    const shadow = view.container.querySelector('[data-provider-content]')!.shadowRoot!;
+    const search = searchControl(view);
+    search.focus();
+    typeSearch(view, 'cv');
+    await advance(300);
+    expect(queries()).toEqual(['', 'q=cv&status=open']);
+    expect(search.disabled).toBe(false);
+
+    typeSearch(view, 'cve-2026');
+    search.setSelectionRange(1, 3, 'backward');
+    await act(async () => {
+      finish(searchPage({ q: 'cv', text: 'Previous search results', searchLast: true }));
+    });
+    expect(searchControl(view)).toBe(search);
+    expect(shadow.activeElement).toBe(search);
+    expect(search.value).toBe('cve-2026');
+    expect([search.selectionStart, search.selectionEnd, search.selectionDirection]).toEqual([1, 3, 'backward']);
+
+    await advance(300);
+    const current = searchControl(view);
+    expect(queries()).toEqual(['', 'q=cv&status=open', 'q=cve-2026&status=open']);
+    expect(content(view).getByText('Rearranged results')).toBeTruthy();
+    expect(shadow.activeElement).toBe(current);
+    expect(current.value).toBe('cve-2026');
+    expect([current.selectionStart, current.selectionEnd, current.selectionDirection]).toEqual([1, 3, 'backward']);
+  });
+
+  it('aborts the older GET when a newer debounced query is submitted', async () => {
+    let resolveOld: (value: unknown) => void = () => {};
+    vi.mocked(providerRequest)
+      .mockResolvedValueOnce(searchPage())
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveOld = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(searchPage({ text: 'New results' }));
+    const view = await openPage();
+    typeSearch(view, 'cve');
+    await advance(300);
+    const previous = vi.mocked(providerRequest).mock.calls[1]?.[4]?.signal;
+    expect(previous?.aborted).toBe(false);
+    typeSearch(view, 'cve-2026');
+    await advance(300);
+    expect(previous?.aborted).toBe(true);
+    await act(async () => {
+      resolveOld(searchPage({ text: 'Old results' }));
+    });
+    expect(content(view).getByText('New results')).toBeTruthy();
+    expect(content(view).queryByText('Old results')).toBeNull();
+  });
+
+  it('cancels scheduled queries on navigation and unmount', async () => {
+    vi.mocked(providerRequest)
+      .mockResolvedValueOnce(searchPage())
+      .mockResolvedValueOnce(searchPage({ id: 'second' }));
+    const view = await openPage();
+    typeSearch(view, 'old page');
+    view.rerender(<ProviderScreen source={source} pageId="second" onManage={vi.fn()} />);
+    await advance(300);
+    expect(queries()).toEqual(['', '']);
+    expect(vi.mocked(providerRequest).mock.calls[1]?.[2]).toBe('v1/pages/second');
+    typeSearch(view, 'unmounted');
+    view.unmount();
+    await advance(300);
+    expect(queries()).toEqual(['', '']);
+  });
+
+  it('uses the submit button for a query form without debounceMs', async () => {
+    vi.mocked(providerRequest).mockResolvedValue(searchPage({ automatic: false }));
+    const view = await openPage();
+    typeSearch(view, 'manual');
+    await advance(500);
+    expect(queries()).toEqual(['']);
+    fireEvent.click(content(view).getByRole('button', { name: 'Apply' }));
+    await advance(0);
+    expect(queries()).toEqual(['', 'q=manual&status=open']);
+  });
+});

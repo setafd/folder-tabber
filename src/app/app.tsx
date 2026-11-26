@@ -89,7 +89,13 @@ export const App = () => {
                       aria-current={source?.id === item.id && selection?.pageId === page.id ? 'page' : undefined}
                       onClick={() => navigate({ sourceId: item.id, pageId: page.id })}
                     >
-                      <ProviderPageIcon name={page.icon} />
+                      {page.iconPath && (
+                        <ProviderPageIcon
+                          key={`${item.revision}:${page.iconPath}`}
+                          source={item}
+                          path={page.iconPath}
+                        />
+                      )}
                       <span>{page.title}</span>
                     </button>
                   ))}

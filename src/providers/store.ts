@@ -4,6 +4,7 @@ import { createStore } from 'zustand';
 import { platform } from '@/platform';
 
 import { normalizeAddress } from './address';
+import { deleteProviderIconCache } from './icon-cache';
 import { type ProviderPage, manifestSchema, pageSchema } from './protocol';
 import { validateCss } from './styles';
 
@@ -102,6 +103,7 @@ export const saveSource = (source: Source, token?: string) =>
       [legacyCredentialKey(source.id)]: '',
     });
     sourceStore.setState({ sources: reconcile(next), error: null });
+    if (previous && previous.revision !== parsed.revision) await deleteProviderIconCache(previous);
   });
 export const removeSource = (source: Source) =>
   serial(async () => {
@@ -111,6 +113,7 @@ export const removeSource = (source: Source) =>
     await Promise.all([
       platform.storage.removeItem(credentialKey(source.id)),
       platform.storage.removeItem(legacyCredentialKey(source.id)),
+      deleteProviderIconCache(source),
       ...source.manifest.pages.map((page) => platform.storage.removeItem(cacheKey(source.id, page.id))),
     ]);
   });

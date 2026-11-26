@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { isProviderIconPath } from './address';
 import { dataTypes } from './data-types';
 
 export type Value = string | number | boolean | null;
@@ -26,7 +27,14 @@ export type ViewNode = Base &
         rows: { id: string; values: Record<string, Value>; actions: Action[] }[];
       }
     | { type: 'button'; action: Action }
-    | { type: 'form'; mode: 'query' | 'action'; fields: Field[]; submitLabel: string; action?: Action }
+    | {
+        type: 'form';
+        mode: 'query' | 'action';
+        fields: Field[];
+        submitLabel?: string;
+        action?: Action;
+        debounceMs?: number;
+      }
   );
 
 const identifier = z
@@ -138,8 +146,9 @@ const nodeSchema: z.ZodType<ViewNode> = z.lazy(() =>
         type: z.literal('form'),
         mode: z.enum(['query', 'action']),
         fields: z.array(fieldSchema).max(50),
-        submitLabel: z.string().min(1).max(200),
+        submitLabel: z.string().min(1).max(200).optional(),
         action: actionSchema.optional(),
+        debounceMs: z.number().int().min(0).max(2_147_483_647).optional(),
       })
       .strict(),
   ]),
@@ -155,7 +164,7 @@ export const manifestSchema = z
         z.strictObject({
           id: identifier,
           title: z.string().min(1).max(200),
-          icon: z.enum(['activity', 'chart', 'jira', 'list', 'page']).optional().catch(undefined),
+          iconPath: z.string().refine(isProviderIconPath).optional().catch(undefined),
         }),
       )
       .max(100)
@@ -180,6 +189,10 @@ export const pageSchema = z
       if (node.type === 'form') {
         if (node.mode === 'action' && !node.action)
           context.addIssue({ code: 'custom', message: 'Action forms need an action' });
+        if (node.mode === 'action' && node.debounceMs !== undefined)
+          context.addIssue({ code: 'custom', message: 'Only query forms can specify debounceMs' });
+        if ((node.mode === 'action' || node.debounceMs === undefined) && node.submitLabel === undefined)
+          context.addIssue({ code: 'custom', message: 'Forms with a submit button need a submitLabel' });
         if (new Set(node.fields.map((field) => field.name)).size !== node.fields.length)
           context.addIssue({ code: 'custom', message: 'Field names must be unique' });
       }

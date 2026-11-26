@@ -13,3 +13,15 @@ export function permissionPattern(address: string) {
   const url = new URL(normalizeAddress(address));
   return `${url.protocol}//${url.hostname}/*`;
 }
+
+export function isProviderIconPath(path: string) {
+  if (path.length > 1024 || /[\\:#?\s]/.test(path)) return false;
+  try {
+    return path.split('/').every((segment) => {
+      const decoded = decodeURIComponent(segment);
+      return decoded !== '' && decoded !== '..' && !/[\\/%]/.test(decoded);
+    });
+  } catch {
+    return false;
+  }
+}

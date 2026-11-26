@@ -88,4 +88,4 @@ other bookmarks. Chromium uses its built-in favicon service.
 
 Connect your own provider to open dashboards, task lists, or forms from the sidebar. Providers return JSON and can include page-specific CSS.
 
-Set a page's optional `icon` in `/v1/manifest` to `activity`, `chart`, `jira`, `list`, or `page`.
+See the [Custom Pages provider API](docs/custom-pages.md) for endpoints, response fields, and icons.

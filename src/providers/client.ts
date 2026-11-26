@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { platform } from '@/platform';
 
-import { normalizeAddress, permissionPattern } from './address';
+import { isProviderIconPath, normalizeAddress, permissionPattern } from './address';
 import { checkTreeLimits } from './protocol';
 
 export class ProviderError extends Error {
@@ -14,12 +14,15 @@ export class ProviderError extends Error {
   }
 }
 
-export async function providerRequest<T>(
+type RequestOptions = { signal?: AbortSignal; body?: unknown; query?: string; dataTypes?: string[] };
+
+async function withProviderResponse<T>(
   address: string,
   token: string,
   path: string,
-  schema: z.ZodType<T>,
-  options: { signal?: AbortSignal; body?: unknown; query?: string; dataTypes?: string[] } = {},
+  options: RequestOptions,
+  accept: string,
+  consume: (response: Response) => Promise<T>,
 ): Promise<T> {
   const base = normalizeAddress(address);
   const requiredData = [...new Set([...(options.dataTypes ?? []), ...(token ? ['authenticationInfo'] : [])])];
@@ -42,7 +45,7 @@ export async function providerRequest<T>(
     const response = await fetch(url, {
       method: options.body === undefined ? 'GET' : 'POST',
       headers: {
-        Accept: 'application/json',
+        Accept: accept,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
@@ -60,29 +63,54 @@ export async function providerRequest<T>(
           : `Source returned HTTP ${response.status}.`,
         response.status,
       );
+    return await consume(response);
+  } catch (error) {
+    if (timedOut) throw new ProviderError('Source did not respond within 15 seconds');
+    if (controller.signal.aborted) throw new DOMException('Request cancelled', 'AbortError');
+    if (error instanceof ProviderError) throw error;
+    throw new ProviderError('Cannot reach the source. Check that the service is running.');
+  } finally {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', abort);
+  }
+}
+
+async function readBody(response: Response, maxBytes: number, sizeError: string) {
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  const reader = response.body?.getReader();
+  if (!reader) return chunks;
+
+  let size = 0;
+  try {
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) return chunks;
+      size += chunk.value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel();
+        throw new ProviderError(sizeError);
+      }
+      chunks.push(chunk.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export function providerRequest<T>(
+  address: string,
+  token: string,
+  path: string,
+  schema: z.ZodType<T>,
+  options: RequestOptions = {},
+) {
+  return withProviderResponse(address, token, path, options, 'application/json', async (response) => {
     if (!response.headers.get('content-type')?.toLowerCase().includes('application/json'))
       throw new ProviderError('Source must return application/json');
-    const reader = response.body?.getReader();
-    let body = '';
-    if (reader) {
-      const decoder = new TextDecoder();
-      let size = 0;
-      try {
-        for (;;) {
-          const chunk = await reader.read();
-          if (chunk.done) break;
-          size += chunk.value.byteLength;
-          if (size > 1_048_576) {
-            await reader.cancel();
-            throw new ProviderError('Source response exceeds 1 MB');
-          }
-          body += decoder.decode(chunk.value, { stream: true });
-        }
-        body += decoder.decode();
-      } finally {
-        reader.releaseLock();
-      }
-    }
+
+    const chunks = await readBody(response, 1_048_576, 'Source response exceeds 1 MB');
+    const decoder = new TextDecoder();
+    const body = chunks.map((chunk) => decoder.decode(chunk, { stream: true })).join('') + decoder.decode();
     let data: unknown;
     try {
       data = JSON.parse(body);
@@ -93,13 +121,26 @@ export async function providerRequest<T>(
     const result = schema.safeParse(data);
     if (!result.success) throw new ProviderError('Source returned an unsupported or invalid protocol response');
     return result.data;
-  } catch (error) {
-    if (timedOut) throw new ProviderError('Source did not respond within 15 seconds');
-    if (controller.signal.aborted) throw new DOMException('Request cancelled', 'AbortError');
-    if (error instanceof ProviderError) throw error;
-    throw new ProviderError('Cannot reach the source. Check that the service is running.');
-  } finally {
-    clearTimeout(timeout);
-    options.signal?.removeEventListener('abort', abort);
-  }
+  });
+}
+
+const iconTypes = ['image/png', 'image/webp', 'image/svg+xml'];
+
+export async function providerIconRequest(
+  address: string,
+  token: string,
+  path: string,
+  options: Pick<RequestOptions, 'signal' | 'dataTypes'> = {},
+) {
+  if (!isProviderIconPath(path)) throw new ProviderError('Invalid provider icon path');
+
+  return withProviderResponse(address, token, path, options, iconTypes.join(', '), async (response) => {
+    const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
+    if (!iconTypes.includes(type)) throw new ProviderError('Source must return a PNG, WebP, or SVG icon');
+
+    const chunks = await readBody(response, 65_536, 'Source icon exceeds 64 KiB');
+    const image = new Blob(chunks, { type });
+    if (!image.size) throw new ProviderError('Source returned an empty icon');
+    return image;
+  });
 }

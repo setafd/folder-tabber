@@ -52,6 +52,9 @@
   align-items: center;
   gap: 8px;
 }
+.workspace-source > .workspace-page + .workspace-page {
+  margin-block-start: 4px;
+}
 .workspace-page > span {
   min-width: 0;
 }
@@ -59,7 +62,7 @@
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
-  color: var(--foreground-light-color);
+  object-fit: contain;
 }
 .workspace-pages-heading {
   position: sticky;

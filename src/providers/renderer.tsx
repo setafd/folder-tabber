@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { Component, type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 import { createPortal } from 'react-dom';
 
@@ -7,10 +7,54 @@ import { baseStyles, validateCss } from './styles';
 
 type Context = {
   disabled: boolean;
+  debouncedQueryDisabled?: boolean;
   onAction: (action: Action, input?: Record<string, Value>) => Promise<ActionResult | null>;
-  onQuery: (input: Record<string, Value>) => void;
+  onQuery: (input: Record<string, Value>, options?: { preserveQuery: boolean }) => void;
 };
+type RenderContext = Context & { queryDrafts: Map<string, Record<string, Value>> };
+type QueryFocus = {
+  formId: string;
+  name: string;
+  selection?: [number, number, NonNullable<HTMLInputElement['selectionDirection']>?];
+};
+type QueryFocusProps = { root: ShadowRoot; children: ReactNode };
 const display = (value: Value | undefined) => (value === null || value === undefined ? '—' : String(value));
+const isTextControl = (control: unknown): control is HTMLInputElement | HTMLTextAreaElement =>
+  control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement;
+
+class QueryFocusBoundary extends Component<QueryFocusProps> {
+  getSnapshotBeforeUpdate(): QueryFocus | null {
+    const active = this.props.root.activeElement;
+    if (!(isTextControl(active) || active instanceof HTMLSelectElement)) return null;
+    const form = active.form;
+    const formId = form?.dataset.debouncedQuery && form.dataset.componentId;
+    if (!formId) return null;
+
+    const focus: QueryFocus = { formId, name: active.name };
+    if (isTextControl(active) && active.selectionStart !== null && active.selectionEnd !== null) {
+      focus.selection = [active.selectionStart, active.selectionEnd, active.selectionDirection ?? undefined];
+    }
+    return focus;
+  }
+
+  componentDidUpdate(_props: Readonly<QueryFocusProps>, _state: unknown, focus: QueryFocus | null) {
+    if (!focus) return;
+    const { root } = this.props;
+    const form = root.querySelector<HTMLFormElement>(`form[data-debounced-query][data-component-id="${focus.formId}"]`);
+    const control = form?.elements.namedItem(focus.name);
+    if (!(control instanceof HTMLElement)) return;
+
+    if (root.activeElement !== control) control.focus();
+    if (!focus.selection || !isTextControl(control) || control.selectionStart === null) return;
+    const [start, end, direction] = focus.selection;
+    if (control.selectionStart !== start || control.selectionEnd !== end || control.selectionDirection !== direction)
+      control.setSelectionRange(start, end, direction);
+  }
+
+  render() {
+    return this.props.children;
+  }
+}
 
 function ActionButton({ action, context }: { action: Action; context: Context }) {
   return (
@@ -28,25 +72,47 @@ function ActionButton({ action, context }: { action: Action; context: Context })
   );
 }
 
-function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; context: Context }) {
-  const [values, setValues] = useState<Record<string, Value>>(() =>
-    Object.fromEntries(
-      node.fields.map((field) => [field.name, field.value ?? (field.type === 'checkbox' ? false : '')]),
-    ),
+function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; context: RenderContext }) {
+  const { queryDrafts } = context;
+  const debounceMs = node.mode === 'query' ? node.debounceMs : undefined;
+  const debounced = debounceMs !== undefined;
+  const disabled = debounced ? (context.debouncedQueryDisabled ?? context.disabled) : context.disabled;
+  const timer = useRef<number>();
+  const submitQuery = useRef<() => void>();
+  const [values, setValues] = useState<Record<string, Value>>(
+    () =>
+      (debounced ? queryDrafts.get(node.id) : undefined) ??
+      Object.fromEntries(
+        node.fields.map((field) => [field.name, field.value ?? (field.type === 'checkbox' ? false : '')]),
+      ),
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState('');
   const getValue = (field: Field) => values[field.name] ?? field.value ?? (field.type === 'checkbox' ? false : '');
+  const collectInput = () => Object.fromEntries(node.fields.map((field) => [field.name, getValue(field)]));
+
+  useLayoutEffect(() => {
+    submitQuery.current = () => {
+      if (!disabled) context.onQuery(collectInput(), { preserveQuery: true });
+    };
+  });
+  useLayoutEffect(() => () => window.clearTimeout(timer.current), [debounceMs, node.id]);
+
+  useLayoutEffect(() => {
+    if (debounced) queryDrafts.set(node.id, values);
+  }, [debounced, node.id, queryDrafts, values]);
+
   return (
     <form
       data-component-id={node.id}
+      data-debounced-query={debounced || undefined}
       className="ft-form"
       onSubmit={async (event) => {
         event.preventDefault();
-        if (context.disabled) return;
+        if (disabled || debounced) return;
         setErrors({});
         setMessage('');
-        const input = Object.fromEntries(node.fields.map((field) => [field.name, getValue(field)]));
+        const input = collectInput();
         if (node.mode === 'query') {
           context.onQuery(input);
           return;
@@ -64,13 +130,17 @@ function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; co
           id: `${node.id}-${field.name}`,
           name: field.name,
           required: field.required,
-          disabled: context.disabled,
+          disabled,
           'aria-invalid': !!errors[field.name],
           'aria-describedby': errors[field.name] ? `${node.id}-${field.name}-error` : undefined,
         };
         const change = (value: Value) => {
           setValues((current) => ({ ...current, [field.name]: value }));
           setErrors((current) => ({ ...current, [field.name]: '' }));
+          if (debounceMs !== undefined) {
+            window.clearTimeout(timer.current);
+            timer.current = window.setTimeout(() => submitQuery.current?.(), debounceMs);
+          }
         };
         return (
           <div key={field.name} className={`ft-form__field ${field.type === 'checkbox' ? 'ft-form__checkbox' : ''}`}>
@@ -133,16 +203,18 @@ function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; co
           {message}
         </div>
       )}
-      <div>
-        <button type="submit" className="ft-button" disabled={context.disabled}>
-          {node.submitLabel}
-        </button>
-      </div>
+      {!debounced && (
+        <div>
+          <button type="submit" className="ft-button" disabled={disabled}>
+            {node.submitLabel}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
 
-function Node({ node, context }: { node: ViewNode; context: Context }) {
+function Node({ node, context }: { node: ViewNode; context: RenderContext }) {
   switch (node.type) {
     case 'stack':
     case 'grid':
@@ -262,9 +334,18 @@ function Node({ node, context }: { node: ViewNode; context: Context }) {
 export function Renderer({ page, localCss, ...context }: Context & { page: ProviderPage; localCss: string }) {
   const host = useRef<HTMLDivElement>(null);
   const [root, setRoot] = useState<ShadowRoot | null>(null);
+  const [queryDrafts] = useState(() => new Map<string, Record<string, Value>>());
   useLayoutEffect(() => {
     if (host.current) setRoot(host.current.shadowRoot ?? host.current.attachShadow({ mode: 'open' }));
   }, []);
+  useLayoutEffect(() => {
+    if (!root || !queryDrafts.size) return;
+    const forms = root.querySelectorAll<HTMLFormElement>('form[data-debounced-query]');
+    const activeIds = new Set(Array.from(forms, (element) => element.dataset.componentId));
+    for (const id of queryDrafts.keys()) {
+      if (!activeIds.has(id)) queryDrafts.delete(id);
+    }
+  }, [page.content, queryDrafts, root]);
   return (
     <div className="provider-content-boundary">
       <div ref={host} data-provider-content="true">
@@ -274,7 +355,9 @@ export function Renderer({ page, localCss, ...context }: Context & { page: Provi
               <style>{baseStyles}</style>
               <style>{validateCss(page.css)}</style>
               <style>{validateCss(localCss)}</style>
-              <Node key={page.content.id} node={page.content} context={context} />
+              <QueryFocusBoundary root={root}>
+                <Node key={page.content.id} node={page.content} context={{ ...context, queryDrafts }} />
+              </QueryFocusBoundary>
             </>,
             root,
           )}

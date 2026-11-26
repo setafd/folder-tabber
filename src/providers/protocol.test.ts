@@ -29,19 +29,47 @@ describe('provider boundary', () => {
         .success,
     ).toBe(false);
   });
-  it('keeps recognized page icons and falls back for missing or unsupported icons', () => {
+  it('accepts debounceMs only on query forms and requires a label for manual submission', () => {
+    const search = { id: 'filter', type: 'form', mode: 'query', fields: [] };
+    expect(pageSchema.safeParse(page({ ...search, debounceMs: 300 })).success).toBe(true);
+    expect(pageSchema.safeParse(page({ ...search, debounceMs: 0 })).success).toBe(true);
+    expect(pageSchema.safeParse(page({ ...search, debounceMs: -1 })).success).toBe(false);
+    expect(pageSchema.safeParse(page(search)).success).toBe(false);
+    expect(pageSchema.safeParse(page({ ...search, submitLabel: 'Filter' })).success).toBe(true);
+    expect(
+      pageSchema.safeParse(
+        page({
+          ...search,
+          mode: 'action',
+          submitLabel: 'Save',
+          action: { id: 'save', label: 'Save' },
+          debounceMs: 300,
+        }),
+      ).success,
+    ).toBe(false);
+  });
+  it('accepts relative provider icon paths and omits invalid paths', () => {
     const manifest = manifestSchema.parse({
       protocolVersion: 1,
       name: 'Workspace',
       pages: [
-        { id: 'health', title: 'Service Health', icon: 'activity' },
-        { id: 'jira', title: 'Jira Queue', icon: 'jira' },
+        { id: 'health', title: 'Service Health', iconPath: 'icons/health.png' },
+        { id: 'jira', title: 'Jira Queue', iconPath: './icons/jira.svg' },
         { id: 'notes', title: 'Notes' },
-        { id: 'future', title: 'Future Dashboard', icon: 'new-icon' },
-        { id: 'external', title: 'External Dashboard', icon: 'https://example.com/icon.svg' },
+        { id: 'parent', title: 'Outside Base Path', iconPath: 'icons/%2E%2E/health.png' },
+        { id: 'external', title: 'External Dashboard', iconPath: 'https://example.com/icon.svg' },
       ],
     });
-    expect(manifest.pages.map((entry) => entry.icon)).toEqual(['activity', 'jira', undefined, undefined, undefined]);
+    expect(manifest.pages.map((entry) => entry.iconPath)).toEqual([
+      'icons/health.png',
+      './icons/jira.svg',
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    expect(
+      manifestSchema.safeParse({ ...manifest, pages: [{ id: 'health', title: 'Health', icon: 'activity' }] }).success,
+    ).toBe(false);
   });
   it('bounds input complexity before recursive schema parsing', () => {
     let nested: unknown = null;
