@@ -122,7 +122,11 @@ export function ProviderScreen({ source, pageId, onManage }: { source: Source; p
       document.removeEventListener('visibilitychange', visible);
     };
   }, [load, page?.refreshAfterSeconds]);
-  const onAction = async (action: Action, values: Record<string, Value> = {}): Promise<ActionResult | null> => {
+  const onAction = async (
+    action: Action,
+    values: Record<string, Value> = {},
+    options?: { modal: true },
+  ): Promise<ActionResult | null> => {
     if (stale || actionBusy.current) return null;
     actionBusy.current = true;
     setBusy(true);
@@ -149,8 +153,11 @@ export function ProviderScreen({ source, pageId, onManage }: { source: Source; p
         },
       );
       if (!mounted.current || controller.signal.aborted) return null;
-      setMessage(result.message);
-      if (result.status === 'success' && result.refresh) await load();
+      if (result.status === 'success' || !options?.modal) setMessage(result.message);
+      if (result.status === 'success' && result.refresh) {
+        const refresh = load();
+        if (!options?.modal) await refresh;
+      }
       return result;
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted) {
@@ -201,6 +208,7 @@ export function ProviderScreen({ source, pageId, onManage }: { source: Source; p
           localCss={source.localCss[pageId] ?? ''}
           disabled={stale || busy}
           debouncedQueryDisabled={busy}
+          error={error}
           onAction={onAction}
           onQuery={(input, options) => {
             const params = new URLSearchParams(options?.preserveQuery ? (query ?? '') : '');

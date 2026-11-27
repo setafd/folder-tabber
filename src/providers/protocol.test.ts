@@ -48,6 +48,30 @@ describe('provider boundary', () => {
       ).success,
     ).toBe(false);
   });
+  it('validates modal form fields on action triggers', () => {
+    const action = {
+      id: 'edit',
+      label: 'Edit',
+      form: { submitLabel: 'Save', fields: [{ name: 'title', label: 'Title', type: 'text', value: 'Existing task' }] },
+    };
+    expect(pageSchema.safeParse(page({ id: 'edit-button', type: 'button', action })).success).toBe(true);
+    expect(
+      pageSchema.safeParse(
+        page({
+          id: 'tasks',
+          type: 'table',
+          columns: [{ field: 'title', title: 'Task' }],
+          rows: [{ id: 'task-1', values: { title: 'Existing task' }, actions: [action] }],
+        }),
+      ).success,
+    ).toBe(true);
+    const duplicateFields = { ...action, form: { ...action.form, fields: [...action.form.fields, ...action.form.fields] } };
+    expect(pageSchema.safeParse(page({ id: 'edit-button', type: 'button', action: duplicateFields })).success).toBe(false);
+    expect(
+      pageSchema.safeParse(page({ id: 'inline', type: 'form', mode: 'action', fields: [], submitLabel: 'Save', action }))
+        .success,
+    ).toBe(false);
+  });
   it('accepts relative provider icon paths and omits invalid paths', () => {
     const manifest = manifestSchema.parse({
       protocolVersion: 1,

@@ -1,4 +1,4 @@
-import { Component, type ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { Component, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { createPortal } from 'react-dom';
 
@@ -8,10 +8,20 @@ import { baseStyles, validateCss } from './styles';
 type Context = {
   disabled: boolean;
   debouncedQueryDisabled?: boolean;
-  onAction: (action: Action, input?: Record<string, Value>) => Promise<ActionResult | null>;
+  error?: string;
+  onAction: (
+    action: Action,
+    input?: Record<string, Value>,
+    options?: { modal: true },
+  ) => Promise<ActionResult | null>;
   onQuery: (input: Record<string, Value>, options?: { preserveQuery: boolean }) => void;
 };
-type RenderContext = Context & { queryDrafts: Map<string, Record<string, Value>> };
+type OpenActionForm = { action: Action; form: NonNullable<Action['form']>; trigger: HTMLButtonElement };
+type RenderContext = Context & {
+  queryDrafts: Map<string, Record<string, Value>>;
+  openActionForm: (selection: OpenActionForm) => void;
+};
+type ModalFormControls = { close: () => void; pending: boolean; error?: string };
 type QueryFocus = {
   formId: string;
   name: string;
@@ -56,14 +66,19 @@ class QueryFocusBoundary extends Component<QueryFocusProps> {
   }
 }
 
-function ActionButton({ action, context }: { action: Action; context: Context }) {
+function ActionButton({ action, context }: { action: Action; context: RenderContext }) {
   return (
     <button
       type="button"
       className="ft-button"
       data-action-id={action.id}
       disabled={context.disabled}
-      onClick={() => {
+      aria-haspopup={action.form ? 'dialog' : undefined}
+      onClick={(event) => {
+        if (action.form) {
+          context.openActionForm({ action, form: action.form, trigger: event.currentTarget });
+          return;
+        }
         if (!action.confirm || window.confirm(action.confirm)) void context.onAction(action);
       }}
     >
@@ -72,7 +87,15 @@ function ActionButton({ action, context }: { action: Action; context: Context })
   );
 }
 
-function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; context: RenderContext }) {
+function Form({
+  node,
+  context,
+  modal,
+}: {
+  node: Extract<ViewNode, { type: 'form' }>;
+  context: RenderContext;
+  modal?: ModalFormControls;
+}) {
   const { queryDrafts } = context;
   const debounceMs = node.mode === 'query' ? node.debounceMs : undefined;
   const debounced = debounceMs !== undefined;
@@ -88,6 +111,7 @@ function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; co
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState('');
+  const formError = message || modal?.error;
   const getValue = (field: Field) => values[field.name] ?? field.value ?? (field.type === 'checkbox' ? false : '');
   const collectInput = () => Object.fromEntries(node.fields.map((field) => [field.name, getValue(field)]));
 
@@ -123,6 +147,7 @@ function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; co
           setErrors(result.fieldErrors);
           setMessage(result.message);
         }
+        if (result?.status === 'success') modal?.close();
       }}
     >
       {node.fields.map((field) => {
@@ -198,19 +223,81 @@ function Form({ node, context }: { node: Extract<ViewNode, { type: 'form' }>; co
           </div>
         );
       })}
-      {message && (
+      {formError && (
         <div role="alert" className="ft-error">
-          {message}
+          {formError}
         </div>
       )}
       {!debounced && (
-        <div>
+        <div className={modal ? 'ft-form__actions' : undefined}>
+          {modal && (
+            <button type="button" className="ft-button" disabled={modal.pending} onClick={modal.close}>
+              Cancel
+            </button>
+          )}
           <button type="submit" className="ft-button" disabled={disabled}>
             {node.submitLabel}
           </button>
         </div>
       )}
     </form>
+  );
+}
+
+function ActionDialog({
+  selection,
+  context,
+  onClose,
+}: {
+  selection: OpenActionForm;
+  context: RenderContext;
+  onClose: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const id = useId();
+  const [pending, setPending] = useState(false);
+  const { action, form, trigger } = selection;
+
+  useLayoutEffect(() => {
+    const element = dialog.current!;
+    element.showModal();
+    return () => {
+      element.close();
+      queueMicrotask(() => {
+        if (trigger.isConnected) trigger.focus();
+      });
+    };
+  }, [trigger]);
+
+  const submit: Context['onAction'] = async (action, input) => {
+    setPending(true);
+    try {
+      return await context.onAction(action, input, { modal: true });
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <dialog
+      ref={dialog}
+      className="ft-dialog"
+      aria-labelledby={`${id}-title`}
+      aria-busy={pending || undefined}
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!pending) onClose();
+      }}
+    >
+      <h2 id={`${id}-title`} className="ft-dialog__title">
+        {form.title ?? action.label}
+      </h2>
+      <Form
+        node={{ id, type: 'form', mode: 'action', fields: form.fields, submitLabel: form.submitLabel, action }}
+        context={{ ...context, disabled: context.disabled || pending, onAction: submit }}
+        modal={{ close: onClose, pending, error: context.error }}
+      />
+    </dialog>
   );
 }
 
@@ -335,6 +422,8 @@ export function Renderer({ page, localCss, ...context }: Context & { page: Provi
   const host = useRef<HTMLDivElement>(null);
   const [root, setRoot] = useState<ShadowRoot | null>(null);
   const [queryDrafts] = useState(() => new Map<string, Record<string, Value>>());
+  const [actionForm, setActionForm] = useState<OpenActionForm | null>(null);
+  const renderContext: RenderContext = { ...context, queryDrafts, openActionForm: setActionForm };
   useLayoutEffect(() => {
     if (host.current) setRoot(host.current.shadowRoot ?? host.current.attachShadow({ mode: 'open' }));
   }, []);
@@ -356,8 +445,11 @@ export function Renderer({ page, localCss, ...context }: Context & { page: Provi
               <style>{validateCss(page.css)}</style>
               <style>{validateCss(localCss)}</style>
               <QueryFocusBoundary root={root}>
-                <Node key={page.content.id} node={page.content} context={{ ...context, queryDrafts }} />
+                <Node key={page.content.id} node={page.content} context={renderContext} />
               </QueryFocusBoundary>
+              {actionForm && (
+                <ActionDialog selection={actionForm} context={renderContext} onClose={() => setActionForm(null)} />
+              )}
             </>,
             root,
           )}

@@ -348,3 +348,150 @@ describe('provider search forms', () => {
     expect(queries()).toEqual(['', 'q=manual&status=open']);
   });
 });
+
+describe('provider modal action forms', () => {
+  const modalPage = (title = 'Existing package') =>
+    pageSchema.parse({
+      id: 'first',
+      title: 'Packages',
+      content: {
+        id: 'packages',
+        type: 'stack',
+        children: [
+          {
+            id: 'add-package',
+            type: 'button',
+            action: {
+              id: 'create',
+              label: 'Add package',
+              form: { submitLabel: 'Add', fields: [{ name: 'name', label: 'Package name', type: 'text' }] },
+            },
+          },
+          {
+            id: 'package-list',
+            type: 'table',
+            columns: [{ field: 'name', title: 'Package' }],
+            rows: [
+              {
+                id: 'package-1',
+                values: { name: title },
+                actions: [
+                  {
+                    id: 'update',
+                    label: 'Edit',
+                    input: { packageId: 'package-1' },
+                    form: {
+                      title: 'Edit package',
+                      submitLabel: 'Save',
+                      fields: [{ name: 'name', label: 'Package name', type: 'text', value: title }],
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  const openPage = async () => {
+    const view = render(<ProviderScreen source={source} pageId="first" onManage={vi.fn()} />);
+    await screen.findByRole('heading', { name: 'Packages' });
+    return view;
+  };
+
+  beforeEach(() => {
+    Object.defineProperties(HTMLDialogElement.prototype, {
+      showModal: {
+        configurable: true,
+        value(this: HTMLDialogElement) {
+          this.setAttribute('open', '');
+          this.querySelector('input')?.focus();
+        },
+      },
+      close: {
+        configurable: true,
+        value(this: HTMLDialogElement) {
+          this.removeAttribute('open');
+        },
+      },
+    });
+  });
+  afterEach(() => {
+    cleanup();
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
+  });
+
+  it('shows prefilled values, keeps a failed draft, and closes on success before refreshing with the same query', async () => {
+    let finishRefresh: (value: unknown) => void = () => {};
+    vi.mocked(readLastQuery).mockResolvedValue('view=due&q=ssl');
+    vi.mocked(providerRequest)
+      .mockResolvedValueOnce(modalPage())
+      .mockResolvedValueOnce({ status: 'error', message: 'Check the name', fieldErrors: { name: 'Too short' } })
+      .mockResolvedValueOnce({ status: 'success', message: 'Saved', refresh: true })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishRefresh = resolve;
+          }),
+      );
+    const view = await openPage();
+    const controls = content(view);
+    expect(controls.queryByRole('textbox')).toBeNull();
+
+    fireEvent.click(controls.getByRole('button', { name: 'Edit' }));
+    const dialog = within(controls.getByRole('dialog', { name: 'Edit package' }));
+    const name = dialog.getByRole('textbox', { name: 'Package name' }) as HTMLInputElement;
+    expect(name.value).toBe('Existing package');
+    expect(providerRequest).toHaveBeenCalledTimes(1);
+    fireEvent.change(name, { target: { value: 'x' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Save' }));
+    await dialog.findByText('Too short');
+    expect(screen.queryByText('Check the name')).toBeNull();
+    expect(name.value).toBe('x');
+    expect(name.getAttribute('aria-invalid')).toBe('true');
+    expect(vi.mocked(providerRequest).mock.calls[1]?.[4]?.body).toMatchObject({
+      action: 'update',
+      input: { packageId: 'package-1', name: 'x' },
+    });
+
+    fireEvent.change(name, { target: { value: 'Updated package' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(controls.queryByRole('dialog')).toBeNull());
+    expect(controls.getByRole('cell', { name: 'Existing package' })).toBeTruthy();
+    expect(providerRequest).toHaveBeenCalledTimes(4);
+    expect(vi.mocked(providerRequest).mock.calls[3]?.[4]).toMatchObject({ query: 'view=due&q=ssl' });
+    await act(async () => {
+      finishRefresh(modalPage('Updated package'));
+    });
+    expect(controls.getByRole('cell', { name: 'Updated package' })).toBeTruthy();
+  });
+
+  it('discards drafts on Cancel and Escape and returns focus to the trigger', async () => {
+    vi.mocked(providerRequest).mockResolvedValueOnce(modalPage());
+    const view = await openPage();
+    const controls = content(view);
+    const shadow = view.container.querySelector('[data-provider-content]')!.shadowRoot!;
+    const trigger = controls.getByRole('button', { name: 'Add package' });
+
+    fireEvent.click(trigger);
+    const dialog = () => controls.getByRole('dialog', { name: 'Add package' });
+    const name = () => within(dialog()).getByRole('textbox', { name: 'Package name' }) as HTMLInputElement;
+    expect(shadow.activeElement).toBe(name());
+    fireEvent.change(name(), { target: { value: 'Discard this' } });
+    await act(async () => {
+      fireEvent.click(within(dialog()).getByRole('button', { name: 'Cancel' }));
+    });
+    expect(controls.queryByRole('dialog')).toBeNull();
+    expect(shadow.activeElement).toBe(trigger);
+
+    fireEvent.click(trigger);
+    expect(name().value).toBe('');
+    await act(async () => {
+      fireEvent(dialog(), new Event('cancel', { cancelable: true }));
+    });
+    expect(controls.queryByRole('dialog')).toBeNull();
+    expect(shadow.activeElement).toBe(trigger);
+    expect(providerRequest).toHaveBeenCalledTimes(1);
+  });
+});

@@ -169,7 +169,7 @@ The form remains editable while results load. Keep the form ID and its field nam
 
 ### Action forms
 
-An action form includes an `action` descriptor. Its submitted fields are merged into `action.input`, with form values taking precedence when keys overlap. Edited text, textarea, and select values are strings. Checkbox values are booleans.
+A `type: "form"` component renders inline. In action mode, it includes an `action` descriptor. Submitted fields are merged into `action.input`, with form values taking precedence when keys overlap. Edited text, textarea, and select values are strings. Checkbox values are booleans.
 
 ```json
 {
@@ -188,6 +188,47 @@ An action form includes an `action` descriptor. Its submitted fields are merged 
 }
 ```
 
+### Modal action forms
+
+Add `form` to the action of a `button` component or to an entry in a list item's or table row's `actions` array. The action's `label` becomes the trigger text. Clicking it opens a modal on the current page. FolderTabber sends the action when the user submits the form.
+
+| `form` field | Required | Value |
+| --- | --- | --- |
+| `title` | Optional | Dialog heading, 1–200 characters. Defaults to the action's `label`. |
+| `fields` | Yes | Up to 50 [form fields](#forms) with unique names. Set `value` to prefill a field when editing. |
+| `submitLabel` | Yes | Submit button label, 1–200 characters |
+
+A button such as **Add package** or **Create task** uses the same action descriptor as a row's **Edit** action. The following table row uses `input.taskId` to identify the record and prefills its title.
+
+```json
+{
+  "id": "task-42",
+  "values": { "title": "Review dependency updates" },
+  "actions": [
+    {
+      "id": "update-task",
+      "label": "Edit",
+      "input": { "taskId": "42" },
+      "form": {
+        "title": "Edit task",
+        "submitLabel": "Save",
+        "fields": [
+          {
+            "name": "title",
+            "label": "Task title",
+            "type": "text",
+            "value": "Review dependency updates",
+            "required": true
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+Both form placements send the same [action request](#action-request). A successful result closes the modal and refreshes the page with the current query when `refresh` is true, the default. An error keeps the modal and draft open and displays any field errors. **Cancel** and **Esc** discard the draft and return focus to the trigger. Dismissal is disabled while the save request is in flight.
+
 ## Actions
 
 ### Action descriptors
@@ -200,6 +241,7 @@ A button, list entry, table row, or action form defines what the extension can s
 | `label` | Yes | Button label, 1–200 characters. An action form uses its own `submitLabel` for the visible button. |
 | `input` | Optional | Object with identifier keys and scalar values, defaults to `{}` |
 | `confirm` | Optional | Confirmation text of up to 1,000 characters. A non-empty string prompts before the request is sent. |
+| `form` | Optional | [Modal form definition](#modal-action-forms) for button, list, and table actions. |
 
 ### Action request
 

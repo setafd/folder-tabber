@@ -4,7 +4,7 @@ import { isProviderIconPath } from './address';
 import { dataTypes } from './data-types';
 
 export type Value = string | number | boolean | null;
-export type Action = { id: string; label: string; input: Record<string, Value>; confirm?: string };
+type SubmitAction = { id: string; label: string; input: Record<string, Value>; confirm?: string };
 export type Field = {
   name: string;
   label: string;
@@ -13,6 +13,8 @@ export type Field = {
   required: boolean;
   options: { label: string; value: string }[];
 };
+type ActionForm = { title?: string; fields: Field[]; submitLabel: string };
+export type Action = SubmitAction & { form?: ActionForm };
 type Base = { id: string };
 export type ViewNode = Base &
   (
@@ -32,7 +34,7 @@ export type ViewNode = Base &
         mode: 'query' | 'action';
         fields: Field[];
         submitLabel?: string;
-        action?: Action;
+        action?: SubmitAction;
         debounceMs?: number;
       }
   );
@@ -46,7 +48,7 @@ const text = z.string().max(20_000);
 const value = z.union([text, z.number().finite(), z.boolean(), z.null()]);
 const values = z.record(identifier, value);
 const unique = (items: { id: string }[]) => new Set(items.map((item) => item.id)).size === items.length;
-const actionSchema = z
+const submitActionSchema = z
   .object({
     id: identifier,
     label: z.string().min(1).max(200),
@@ -67,6 +69,22 @@ const fieldSchema = z
       .default([]),
   })
   .strict();
+const fieldsSchema = z
+  .array(fieldSchema)
+  .max(50)
+  .refine((fields) => new Set(fields.map((field) => field.name)).size === fields.length, {
+    message: 'Field names must be unique',
+  });
+const submitLabelSchema = z.string().min(1).max(200);
+const actionSchema = submitActionSchema.extend({
+  form: z
+    .strictObject({
+      title: z.string().min(1).max(200).optional(),
+      fields: fieldsSchema,
+      submitLabel: submitLabelSchema,
+    })
+    .optional(),
+});
 const base = z.object({ id: identifier });
 const children = () => z.array(nodeSchema).max(200);
 const nodeSchema: z.ZodType<ViewNode> = z.lazy(() =>
@@ -145,9 +163,9 @@ const nodeSchema: z.ZodType<ViewNode> = z.lazy(() =>
       .extend({
         type: z.literal('form'),
         mode: z.enum(['query', 'action']),
-        fields: z.array(fieldSchema).max(50),
-        submitLabel: z.string().min(1).max(200).optional(),
-        action: actionSchema.optional(),
+        fields: fieldsSchema,
+        submitLabel: submitLabelSchema.optional(),
+        action: submitActionSchema.optional(),
         debounceMs: z.number().int().min(0).max(2_147_483_647).optional(),
       })
       .strict(),
@@ -193,8 +211,6 @@ export const pageSchema = z
           context.addIssue({ code: 'custom', message: 'Only query forms can specify debounceMs' });
         if ((node.mode === 'action' || node.debounceMs === undefined) && node.submitLabel === undefined)
           context.addIssue({ code: 'custom', message: 'Forms with a submit button need a submitLabel' });
-        if (new Set(node.fields.map((field) => field.name)).size !== node.fields.length)
-          context.addIssue({ code: 'custom', message: 'Field names must be unique' });
       }
     };
     visit(page.content);
